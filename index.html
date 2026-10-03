@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friday Musings</title>
+<meta name="description" content="Interactive essays by Sandip Khetan, Uniqus Consultech.">
+<style>
+:root { --bg:#FBFAFD; --ink:#333333; --strong:#1E1A26; --meta:#666666; --line:#E3DCEC; --purple:#482879; --magenta:#B21E7D; --card:#FFFFFF; }
+@media (prefers-color-scheme: dark) { :root { --bg:#131418; --ink:#E4E0EA; --strong:#FFFFFF; --meta:#A39EAD; --line:#34303D; --purple:#BBA6DC; --magenta:#E46BB0; --card:#1B1D22; color-scheme: dark; } }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 Arial, Helvetica, sans-serif; }
+.bar { height:6px; background:linear-gradient(90deg,#B21E7D,#482879); }
+main { max-width:760px; margin:0 auto; padding:56px 20px; display:grid; gap:28px; }
+h1 { margin:0; color:var(--purple); font-size:clamp(2rem,6vw,3rem); letter-spacing:-0.03em; }
+.eyebrow { font-size:.74rem; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--magenta); }
+a.card { display:grid; gap:6px; padding:22px; border:1px solid var(--line); border-radius:16px; background:var(--card); text-decoration:none; color:var(--ink); }
+a.card:hover, a.card:focus-visible { border-color:var(--magenta); }
+a.card b { font-size:1.35rem; color:var(--strong); }
+.date { font-size:.8rem; color:var(--meta); }
+footer { font-size:.85rem; color:var(--meta); }
+</style>
+</head>
+<body>
+<div class="bar"></div>
+<main>
+  <div><p class="eyebrow">Sandip Khetan · Uniqus Consultech</p><h1>Friday Musings</h1><p>Accounting, controls, and where technology is taking both. Some of these you can play with.</p></div>
+  <a class="card" href="2026-10-03-who-picks-up/">
+    <span class="date">3 October 2026 · Interactive</span>
+    <b>Who picks up when your agent calls?</b>
+    <span>Personal AI concierges, agent gateways, and the controls behind agent-made transactions.</span>
+  </a>
+  <a class="card" href="concierge/">
+    <span class="date">Live demo · Claude Sonnet 5.5</span>
+    <b>Give my concierge a chore</b>
+    <span>A live AI concierge that books, schedules and drafts your errands under a mandate you control.</span>
+  </a>
+  <footer>Personal views, not advice. <a href="https://www.uniqus.com" style="color:var(--magenta)">uniqus.com</a></footer>
+</main>
+</body>
+</html>

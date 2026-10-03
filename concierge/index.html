@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Concierge Playground</title>
+<meta name="description" content="Give a live AI concierge your everyday errands. It books with demo businesses that run agent gateways, builds your calendar, and drafts the messages you still need to send.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Give my concierge a chore">
+<meta property="og:description" content="A live AI concierge (Claude Sonnet 5.5) that books, schedules and drafts your errands, under a mandate you control. Works from Mumbai, Dubai or New York.">
+<meta property="og:image" content="https://friday-musings.vercel.app/2026-10-03-who-picks-up/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: dark header, then a two-column workbench (your brief · the live run), then the errand board, then context (availability, gateway for other agents). Uniqus brand: purple/magenta, Arial. */
+:root {
+  --bg: #FBFAFD; --surface: #FFFFFF; --surface-2: #F4F0F9; --ink: #333333; --ink-strong: #1E1A26;
+  --meta: #666666; --line: #E3DCEC; --purple: #482879; --magenta: #B21E7D; --wash: #E1D9EB; --pink-wash: #EED8E6;
+  --hero: #202429; --bubble: #482879; --bubble-ink: #FFFFFF;
+  --ok: #1E7A4F; --warn: #9A5B00; --bad: #B42318; --ok-wash: #E3F2EA; --warn-wash: #FBEFD9; --bad-wash: #FBE4E1;
+  --font-body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --grad: linear-gradient(90deg, #B21E7D, #482879);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131418; --surface: #1B1D22; --surface-2: #231F2D; --ink: #E4E0EA; --ink-strong: #FFFFFF; --meta: #A39EAD;
+    --line: #34303D; --purple: #BBA6DC; --magenta: #E46BB0; --wash: #2B2340; --pink-wash: #3A2236; --hero: #0D0E11;
+    --bubble: #573594; --ok: #5CC593; --warn: #E8A94A; --bad: #F2796E; --ok-wash: #173226; --warn-wash: #352812; --bad-wash: #3A1A18;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font-body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; }
+h1, h2, h3 { margin: 0; color: var(--ink-strong); line-height: 1.15; text-wrap: balance; }
+h2 { color: var(--purple); font-size: clamp(1.4rem, 2.6vw, 1.9rem); letter-spacing: -0.02em; }
+p { margin: 0; }
+a { color: var(--magenta); }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
+.eyebrow { font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--magenta); }
+.mono { font-family: var(--font-mono); }
+.hint { font-size: .8rem; color: var(--meta); }
+
+header { background: var(--hero); color: #fff; padding-block: 24px 40px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.top img { width: 120px; height: auto; display: block; }
+.top a { color: #E46BB0; font-size: .88rem; }
+header h1 { color: #fff; font-size: clamp(2rem, 5vw, 3.4rem); letter-spacing: -0.03em; margin-top: 28px; }
+header h1 em { font-style: normal; background: linear-gradient(90deg, #E46BB0, #A28BBD); -webkit-background-clip: text; background-clip: text; color: transparent; }
+header .dek { margin-top: 14px; color: #D9D4E2; max-width: 44em; font-size: 1.08rem; }
+.bar { height: 6px; background: var(--grad); }
+
+.bench { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 20px; margin-top: 28px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0; }
+.panel h3 { font-size: .76rem; letter-spacing: .12em; text-transform: uppercase; color: var(--meta); }
+form { display: grid; gap: 14px; }
+label.f { display: grid; gap: 6px; font-size: .88rem; font-weight: 700; color: var(--ink-strong); }
+input[type=text], input[type=number], select, textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); color: var(--ink-strong); font-weight: 400; }
+textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 5px 11px; font-size: .8rem; }
+.chips button:hover { border-color: var(--magenta); }
+.money { position: relative; }
+.money span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-family: var(--font-mono); font-size: .8rem; color: var(--meta); }
+.money input { padding-left: 46px; font-family: var(--font-mono); }
+.go { border: 0; border-radius: 999px; padding: 13px; background: var(--grad); color: #fff; font-weight: 700; font-size: 1.02rem; }
+.go:disabled { opacity: .55; cursor: progress; }
+.privacy { font-size: .78rem; color: var(--meta); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+
+.run-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.pill { font-size: .74rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); color: var(--meta); }
+.pill.working { background: var(--wash); color: var(--purple); }
+.pill.waiting { background: var(--warn-wash); color: var(--warn); }
+.pill.done { background: var(--ok-wash); color: var(--ok); }
+.pill.err { background: var(--bad-wash); color: var(--bad); }
+.cost { font-family: var(--font-mono); font-size: .76rem; color: var(--meta); font-variant-numeric: tabular-nums; }
+.feed { height: 460px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.feed .empty { margin: auto 0; display: grid; gap: 12px; color: var(--meta); font-size: .92rem; }
+.feed .empty ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.it { animation: pop .2s ease-out; }
+@keyframes pop { from { opacity: .3; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.it.thought { font-size: .84rem; color: var(--meta); font-style: italic; border-left: 2px solid var(--line); padding-left: 10px; }
+.it.say { align-self: flex-start; max-width: 90%; background: var(--bubble); color: var(--bubble-ink); padding: 9px 13px; border-radius: 14px 14px 14px 4px; font-size: .93rem; }
+.it.wire { font-family: var(--font-mono); font-size: .74rem; padding: 6px 9px; border-radius: 8px; background: var(--surface-2); color: var(--purple); overflow-wrap: anywhere; }
+.it.wire.bad { color: var(--bad); background: var(--bad-wash); }
+.it.wire small { display: block; color: var(--meta); font-size: .72rem; }
+.it.status { align-self: center; font-size: .78rem; color: var(--meta); }
+.it.error { background: var(--bad-wash); color: var(--bad); border-radius: 10px; padding: 10px 12px; font-size: .9rem; }
+.approve { align-self: flex-end; max-width: 92%; border: 2px solid var(--magenta); border-radius: 14px; padding: 12px 14px; background: var(--surface); display: grid; gap: 10px; }
+.approve b { color: var(--ink-strong); }
+.approve .amt { font-family: var(--font-mono); color: var(--magenta); font-weight: 600; }
+.approve .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.approve button { border-radius: 999px; padding: 8px 16px; font-weight: 700; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-strong); }
+.approve button.yes { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.approve.decided { opacity: .6; }
+
+.side { display: grid; gap: 16px; margin-top: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.ledger { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
+.lrow { display: grid; grid-template-columns: 9px minmax(0, 1fr); gap: 9px; padding: 7px 9px; border-radius: 9px; background: var(--surface-2); font-size: .82rem; }
+.lrow i { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; background: var(--meta); }
+.lrow.ok i { background: var(--ok); } .lrow.warn i { background: var(--warn); } .lrow.bad i { background: var(--bad); }
+.lrow b { color: var(--ink-strong); display: block; }
+.lrow small { color: var(--meta); overflow-wrap: anywhere; }
+.meter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.meter div { background: var(--surface-2); border-radius: 10px; padding: 9px 10px; display: grid; }
+.meter span { font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--meta); font-weight: 700; }
+.meter b { font-family: var(--font-mono); font-size: 1rem; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+
+section.block { padding-block: 44px; }
+.headline { margin-top: 14px; background: var(--wash); border-left: 5px solid var(--magenta); border-radius: 4px 12px 12px 4px; padding: 14px 16px; color: var(--ink-strong); font-weight: 700; }
+.board-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink-strong); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: .86rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn.primary { background: var(--grad); border: 0; color: #fff; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; margin-top: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.card-head b { color: var(--ink-strong); font-size: 1.02rem; }
+.card-head small { display: block; color: var(--meta); font-size: .76rem; text-transform: capitalize; }
+.st { font-size: .7rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--meta); }
+.st.done { background: var(--ok-wash); color: var(--ok); }
+.st.scheduled, .st.drafted { background: var(--wash); color: var(--purple); }
+.st.human_only, .st.needs_gateway { background: var(--warn-wash); color: var(--warn); }
+.st.skipped { background: var(--bad-wash); color: var(--bad); }
+.outcome { font-size: .9rem; }
+.next { font-size: .85rem; color: var(--warn); }
+.att { border-top: 1px dashed var(--line); padding-top: 10px; display: grid; gap: 8px; font-size: .86rem; }
+.att .k { font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--meta); }
+.att .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.att .acts a, .att .acts button { font-size: .78rem; padding: 5px 11px; }
+.draft-body { white-space: pre-wrap; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: .86rem; color: var(--ink-strong); }
+.rcpt { font-family: var(--font-mono); font-size: .74rem; color: var(--meta); overflow-wrap: anywhere; }
+.rcpt b { color: var(--ink-strong); }
+.verified { font-size: .78rem; font-weight: 700; }
+.verified.yes { color: var(--ok); } .verified.no { color: var(--bad); }
+details pre { margin: 6px 0 0; font-family: var(--font-mono); font-size: .7rem; background: var(--surface-2); border-radius: 8px; padding: 8px; overflow-x: auto; }
+.board-empty { margin-top: 16px; color: var(--meta); font-size: .92rem; border: 1px dashed var(--line); border-radius: 14px; padding: 22px; }
+
+.ctx { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; margin-top: 18px; align-items: start; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .88rem; }
+th { background: #482879; color: #fff; text-align: left; padding: 10px 12px; font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; }
+td { padding: 11px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+td:first-child { font-weight: 700; color: var(--purple); }
+tbody tr:last-child td { background: var(--pink-wash); }
+.dev { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 10px; }
+.dev pre { margin: 0; font-family: var(--font-mono); font-size: .74rem; background: var(--surface-2); border-radius: 10px; padding: 12px; overflow-x: auto; white-space: pre; }
+footer { background: var(--hero); color: #CFC8DA; padding-block: 30px; font-size: .84rem; margin-top: 20px; }
+footer .wrap { display: grid; gap: 8px; }
+footer a { color: #E46BB0; }
+
+@media (max-width: 900px) {
+  .bench, .ctx { grid-template-columns: minmax(0, 1fr); }
+  .feed { height: 400px; }
+}
+@media (max-width: 560px) {
+  .side, .row2 { grid-template-columns: minmax(0, 1fr); }
+  .wrap { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <img src="/2026-10-03-who-picks-up/uniqus-logo-white.png" alt="Uniqus Consultech" width="120" height="42">
+      <a href="/2026-10-03-who-picks-up/">← Read the Friday Musing</a>
+    </div>
+    <p class="eyebrow" style="color:#E46BB0;margin-top:26px">Live demo · Claude Sonnet 5.5</p>
+    <h1>Give my concierge <em>a chore</em></h1>
+    <p class="dek">Muse launched US-only and dots needs a paid ChatGPT plan, so most of India can't try a personal agent yet. This one runs for anyone. It books with demo businesses that answer agents, builds your calendar, and drafts the messages you still need to send, inside a mandate you set.</p>
+  </div>
+</header>
+<div class="bar"></div>
+
+<main class="wrap">
+  <div class="bench">
+    <div class="panel">
+      <form id="brief">
+        <h3>Your brief</h3>
+        <div class="row2">
+          <label class="f" for="city">City
+            <select id="city">
+              <option value="mumbai">Mumbai</option>
+              <option value="bengaluru">Bengaluru</option>
+              <option value="delhi">Delhi NCR</option>
+              <option value="dubai">Dubai</option>
+              <option value="newyork">New York</option>
+            </select>
+          </label>
+          <label class="f" for="firstName">First name <span class="hint">(optional)</span>
+            <input type="text" id="firstName" maxlength="30" autocomplete="given-name" placeholder="Used to sign drafts">
+          </label>
+        </div>
+        <label class="f" for="errands">Your errands, in your own words
+          <textarea id="errands" maxlength="1200"></textarea>
+        </label>
+        <div>
+          <span class="hint">Try an example:</span>
+          <div class="chips" id="examples"></div>
+        </div>
+        <div class="row2">
+          <label class="f" for="cap">Spending cap per errand
+            <span class="money"><span class="cur"></span><input type="number" id="cap" min="0" step="100"></span>
+          </label>
+          <label class="f" for="ask">Ask me before spending over
+            <span class="money"><span class="cur"></span><input type="number" id="ask" min="0" step="100"></span>
+          </label>
+        </div>
+        <p class="hint">Cancellations and anything else irreversible always come back to you. The server enforces this mandate, not the model.</p>
+        <button class="go" id="go" type="submit">Run my errands</button>
+        <p class="privacy">Don't include ID numbers, card details or anything private. Your text goes to Anthropic's API to run the agent, and this site doesn't store it. Businesses here are fictional demos, so nothing you "book" is real. Your calendar file and message drafts are real.</p>
+      </form>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="run-head">
+          <h3>The run, live</h3>
+          <span class="pill" id="pill">Ready</span>
+        </div>
+        <div class="feed" id="feed" aria-live="polite">
+          <div class="empty" id="feedEmpty">
+            <b style="color:var(--ink-strong)">What happens when you press Run</b>
+            <ol>
+              <li>The concierge sorts your message into errands.</li>
+              <li>For errands with a gateway (restaurant, clinic, home repairs, insurance, gym) it calls the business's agent and gets a real offer.</li>
+              <li>It commits within your mandate, and stops to ask you when it must.</li>
+              <li>Everything else becomes a calendar entry or a ready-to-send message.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <div class="side">
+        <div class="panel">
+          <h3 style="margin-bottom:10px">Controls ledger</h3>
+          <div class="ledger" id="ledger"><p class="hint">Mandate checks, approvals and receipts appear here.</p></div>
+        </div>
+        <div class="panel">
+          <h3 style="margin-bottom:10px">This run</h3>
+          <div class="meter">
+            <div><span>Model turns</span><b id="mTurns">0</b></div>
+            <div><span>API cost</span><b id="mCost">$0.000</b></div>
+            <div><span>Tokens</span><b id="mTokens">0</b></div>
+            <div><span>Served from cache</span><b id="mCache">0%</b></div>
+          </div>
+          <p class="hint" style="margin-top:10px">Cost is what this run cost on the Claude API, paid by the demo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="block" id="results">
+    <h2>Your errand board</h2>
+    <div id="headline" class="headline" hidden></div>
+    <div class="board-tools">
+      <button class="btn primary" id="ics" type="button" disabled>Add all to my calendar (.ics)</button>
+      <span class="hint" id="icsHint">Calendar entries the concierge creates will collect here.</span>
+    </div>
+    <div class="board" id="board"></div>
+    <p class="board-empty" id="boardEmpty">Run your errands to see each one here, with its receipt, calendar entry or draft message.</p>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="ctx">
+      <div>
+        <h2>Where can you try the real ones?</h2>
+        <p class="hint" style="margin:8px 0 14px">As reported in the week of launch. Check each product before relying on it.</p>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Agent</th><th>Availability</th><th>Access</th></tr></thead>
+            <tbody>
+              <tr><td>Muse (Meta)</td><td>US only at launch, 8 Sep 2026</td><td>Free and paid tiers; app and WhatsApp</td></tr>
+              <tr><td>dots (OpenAI)</td><td>Eligible markets; not EEA, UK or Switzerland at launch</td><td>ChatGPT Pro and Business Premium, Enterprise beta</td></tr>
+              <tr><td>Instinct</td><td>Invite only</td><td>Text or call; pricing not published</td></tr>
+              <tr><td>Grok Bot (SpaceXAI)</td><td>Beta since Aug 2026</td><td>SuperGrok or eligible Cursor plans</td></tr>
+              <tr><td>This playground</td><td>Anywhere</td><td>Free, a few runs per hour</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dev">
+        <h2>Point your own agent at our businesses</h2>
+        <p>The demo businesses publish real agent cards and answer real requests. Any agent can call them, including yours.</p>
+<pre id="curl">curl <span class="origin"></span>/.well-known/agent-card.json
+
+curl -X POST <span class="origin"></span>/gateway/saffron-room \
+  -H 'Content-Type: application/json' \
+  -d '{"intent":"availability.search","city":"mumbai",
+       "params":{"date":"<span id="sampleDate"></span>","time":"20:00","party_size":4}}'</pre>
+        <p class="hint">Receipts are signed with Ed25519. The public key is in every agent card.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>A companion to <a href="/2026-10-03-who-picks-up/">Who picks up when your agent calls?</a>, Friday Musings by Sandip Khetan, Co-Founder, Uniqus Consultech.</p>
+    <p>Demo only. Saffron Room, CityCare Clinic, FixIt Home Services, ShieldSure Insurance and Pulse Fitness are fictional. Runs use Claude Sonnet 5.5 via the Anthropic API.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var CUR = { mumbai: "INR", bengaluru: "INR", delhi: "INR", dubai: "AED", newyork: "USD" };
+  var TZ = { mumbai: "Asia/Kolkata", bengaluru: "Asia/Kolkata", delhi: "Asia/Kolkata", dubai: "Asia/Dubai", newyork: "America/New_York" };
+  var DEFAULTS = { INR: [5000, 1500], AED: [600, 200], USD: [300, 100] };
+  var EXAMPLES = [
+    { label: "Mumbai, Hinglish", city: "mumbai", text: "Thursday dinner for 4 at 8pm, ek vegetarian hai. Dentist checkup next week, evening better. Gym membership cancel karna hai end of month se. Mom ka birthday Saturday ko hai, gift bhi lena hai. Society maintenance pay karna hai." },
+    { label: "Bengaluru home", city: "bengaluru", text: "Kitchen tap is leaking, get a plumber this weekend. AC service before Diwali. Car insurance expires on the 20th, get me a renewal quote. Remind me to pay the electricity bill on the 10th." },
+    { label: "Dubai week", city: "dubai", text: "Table for 2 on Friday around 9pm. Book a GP visit tomorrow morning. Cancel my gym, the new one is closer. Remind me to renew my car registration next month." },
+    { label: "New York", city: "newyork", text: "Physio appointment on Wednesday afternoon. Deep cleaning for the apartment next week. Text my landlord that the radiator is fixed. Dinner for 6 on Saturday, 7pm." }
+  ];
+
+  function money(cur, n) {
+    try { return new Intl.NumberFormat(cur === "INR" ? "en-IN" : "en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(n); }
+    catch (e) { return cur + " " + n; }
+  }
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
+
+  /* ---------- Brief ---------- */
+  var city = $("city"), errands = $("errands"), cap = $("cap"), ask = $("ask");
+  function setCurrency(resetAmounts) {
+    var cur = CUR[city.value];
+    document.querySelectorAll(".money .cur").forEach(function (s) { s.textContent = cur; });
+    if (resetAmounts) { cap.value = DEFAULTS[cur][0]; ask.value = DEFAULTS[cur][1]; }
+  }
+  EXAMPLES.forEach(function (ex) {
+    var b = el("button", "", esc(ex.label));
+    b.type = "button";
+    b.addEventListener("click", function () { errands.value = ex.text; city.value = ex.city; setCurrency(true); });
+    $("examples").appendChild(b);
+  });
+  city.addEventListener("change", function () { setCurrency(true); });
+  errands.value = EXAMPLES[0].text;
+  $("firstName").value = store("fm-first-name") || "";
+  setCurrency(true);
+
+  var origin = location.origin;
+  document.querySelectorAll(".origin").forEach(function (s) { s.textContent = origin; });
+  $("sampleDate").textContent = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+
+  /* ---------- Run state ---------- */
+  var feed = $("feed"), ledger = $("ledger"), board = $("board"), pill = $("pill"), go = $("go");
+  var cards = {}, events = [], currency = "INR", busy = false;
+
+  function setPill(text, cls) { pill.textContent = text; pill.className = "pill " + (cls || ""); }
+  function addFeed(node) {
+    var empty = $("feedEmpty"); if (empty) empty.remove();
+    feed.appendChild(node);
+    feed.scrollTop = feed.scrollHeight;
+  }
+  function addLedger(kind, title, detail) {
+    if (ledger.querySelector("p")) ledger.innerHTML = "";
+    var r = el("div", "lrow " + kind, "<i></i><div><b>" + esc(title) + "</b><small>" + esc(detail) + "</small></div>");
+    ledger.appendChild(r); ledger.scrollTop = ledger.scrollHeight;
+  }
+
+  function card(ref, title, category) {
+    if (cards[ref]) return cards[ref];
+    $("boardEmpty").hidden = true;
+    var c = el("article", "card");
+    c.innerHTML = '<div class="card-head"><div><b></b><small></small></div><span class="st">working</span></div><p class="outcome hint">The concierge is on it.</p><p class="next" hidden></p>';
+    c.querySelector("b").textContent = ref + " · " + (title || "Errand");
+    c.querySelector("small").textContent = (category || "").replace(/_/g, " ");
+    board.appendChild(c);
+    cards[ref] = c;
+    return c;
+  }
+  function attach(ref, node) { card(ref).appendChild(node); }
+
+  /* ---------- Calendar ---------- */
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function shift(local, mins) {
+    var d = new Date(Date.UTC(+local.slice(0, 4), +local.slice(5, 7) - 1, +local.slice(8, 10), +(local.slice(11, 13) || 0), +(local.slice(14, 16) || 0)) + mins * 60000);
+    return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
+  }
+  function compact(local) { return local.replace(/[-:]/g, "") + (local.length > 10 ? "00" : ""); }
+  function span(ev) {
+    if (ev.all_day) return [ev.start.replace(/-/g, ""), shift(ev.start + "T00:00", 1440).slice(0, 10).replace(/-/g, "")];
+    return [compact(ev.start), compact(shift(ev.start, ev.duration_minutes || 30))];
+  }
+  function icsText(s) { return String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+  function fold(line) { var out = []; while (line.length > 74) { out.push(line.slice(0, 74)); line = " " + line.slice(74); } out.push(line); return out.join("\r\n"); }
+  function buildIcs() {
+    var stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+    var lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Friday Musings//Concierge//EN", "CALSCALE:GREGORIAN"];
+    events.forEach(function (ev, i) {
+      var s = span(ev);
+      lines.push("BEGIN:VEVENT", "UID:" + stamp + "-" + i + "@friday-musings", "DTSTAMP:" + stamp,
+        ev.all_day ? "DTSTART;VALUE=DATE:" + s[0] : "DTSTART:" + s[0],
+        ev.all_day ? "DTEND;VALUE=DATE:" + s[1] : "DTEND:" + s[1],
+        "SUMMARY:" + icsText(ev.title));
+      if (ev.notes) lines.push("DESCRIPTION:" + icsText(ev.notes));
+      if (ev.location) lines.push("LOCATION:" + icsText(ev.location));
+      (ev.reminders || []).forEach(function (m) { lines.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsText(ev.title), "TRIGGER:-PT" + m + "M", "END:VALARM"); });
+      lines.push("END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    return lines.map(fold).join("\r\n") + "\r\n";
+  }
+  $("ics").addEventListener("click", function () {
+    var url = URL.createObjectURL(new Blob([buildIcs()], { type: "text/calendar" }));
+    var a = el("a"); a.href = url; a.download = "concierge-errands.ics"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  });
+  function googleLink(ev) {
+    var s = span(ev);
+    return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(ev.title) + "&dates=" + s[0] + "/" + s[1] +
+      "&details=" + encodeURIComponent(ev.notes || "Added by the Friday Musings concierge") + "&ctz=" + encodeURIComponent(ev.tz || "");
+  }
+  function when(ev) {
+    var d = new Date(ev.start.slice(0, 10) + "T12:00:00Z");
+    var day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+    return ev.all_day ? day + " · all day" : day + " · " + ev.start.slice(11, 16);
+  }
+
+  /* ---------- Drafts ---------- */
+  function draftLinks(d) {
+    var text = d.body;
+    if (d.channel === "email") {
+      return "mailto:" + encodeURIComponent(d.to_contact || "") + "?subject=" + encodeURIComponent(d.subject || "") + "&body=" + encodeURIComponent(text);
+    }
+    var digits = String(d.to_contact || "").replace(/\D/g, "");
+    if (d.channel === "sms") return "sms:" + digits + "?&body=" + encodeURIComponent(text);
+    return "https://wa.me/" + (digits.length >= 10 ? digits : "") + "?text=" + encodeURIComponent(text);
+  }
+  function copy(text, btn) {
+    var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { btn.textContent = "Select and copy"; });
+  }
+
+  /* ---------- Event handling ---------- */
+  var STATUS = { done: "Done by agent", scheduled: "Scheduled", drafted: "Drafted", needs_gateway: "Needs a gateway", human_only: "Needs you", skipped: "Not done" };
+
+  function onEvent(e) {
+    switch (e.t) {
+      case "run": currency = e.currency; break;
+      case "status": setPill(e.text + "…", "working"); break;
+      case "thought": addFeed(el("div", "it thought", esc(e.text))); break;
+      case "say": addFeed(el("div", "it say", esc(e.text))); break;
+      case "wire": addFeed(el("div", "it wire" + (e.ok ? "" : " bad"), esc(e.line) + "<small>" + esc(e.detail) + "</small>")); break;
+      case "ledger": addLedger(e.kind, e.title, e.detail); break;
+      case "errands": e.errands.forEach(function (x) { card(x.ref, x.title, x.category); }); break;
+      case "offer": {
+        var o = e.offer, n = el("div", "att");
+        n.dataset.offer = o.offer_id;
+        n.innerHTML = '<span class="k">Offer · ' + esc(o.business_name) + ' (demo)</span><span>' + esc(o.summary) + '</span><span class="mono">' + esc(money(o.currency, o.amount)) + " · " + esc(o.payment) + "</span>";
+        attach(e.ref, n);
+        break;
+      }
+      case "receipt": {
+        var r = e.receipt, c = card(e.ref), prev = c.querySelector('[data-offer="' + r.offer_id + '"]');
+        if (prev) prev.remove();
+        var rn = el("div", "att");
+        rn.innerHTML = '<span class="k">Signed receipt · ' + esc(r.business_name) + ' (demo)</span><span>' + esc(r.summary) + '</span>' +
+          '<span class="rcpt"><b>' + esc(r.receipt_id) + "</b> · " + esc(money(r.currency, r.amount)) + " · Ed25519 " + esc(r.signature.value.slice(0, 16)) + '…</span>' +
+          '<div class="acts"><button class="btn" type="button">Verify signature</button><span class="verified"></span></div>' +
+          "<details><summary class=\"hint\">Receipt JSON</summary><pre>" + esc(JSON.stringify(r, null, 2)) + "</pre></details>";
+        rn.querySelector("button").addEventListener("click", function () {
+          var out = rn.querySelector(".verified");
+          fetch("/api/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ receipt: r }) })
+            .then(function (x) { return x.json(); })
+            .then(function (j) { out.textContent = j.valid ? "Valid signature" : "Invalid signature"; out.className = "verified " + (j.valid ? "yes" : "no"); })
+            .catch(function () { out.textContent = "Couldn't reach the verifier"; out.className = "verified no"; });
+        });
+        attach(e.ref, rn);
+        break;
+      }
+      case "calendar": {
+        var ev = e.event;
+        events.push(ev);
+        $("ics").disabled = false;
+        $("icsHint").textContent = events.length + (events.length === 1 ? " entry" : " entries") + " ready. Opens in Google, Outlook or Apple Calendar.";
+        var cn = el("div", "att");
+        cn.innerHTML = '<span class="k">Calendar</span><span><b>' + esc(ev.title) + "</b> · " + esc(when(ev)) + (ev.reminders.length ? " · reminders " + ev.reminders.map(function (m) { return m >= 1440 ? Math.round(m / 1440) + "d" : m >= 60 ? Math.round(m / 60) + "h" : m + "m"; }).join(", ") + " before" : "") + '</span><div class="acts"><a class="btn" target="_blank" rel="noopener">Add to Google Calendar</a></div>';
+        cn.querySelector("a").href = googleLink(ev);
+        attach(e.ref, cn);
+        break;
+      }
+      case "draft": {
+        var d = e.draft, dn = el("div", "att");
+        var label = { whatsapp: "Open WhatsApp", email: "Open email", sms: "Open messages" }[d.channel];
+        dn.innerHTML = '<span class="k">Draft ' + esc(d.channel) + " to " + esc(d.to_name) + "</span>" + (d.subject ? "<b>" + esc(d.subject) + "</b>" : "") +
+          '<div class="draft-body"></div><div class="acts"><a class="btn primary" target="_blank" rel="noopener"></a><button class="btn" type="button">Copy</button></div>';
+        dn.querySelector(".draft-body").textContent = d.body;
+        var a = dn.querySelector("a"); a.href = draftLinks(d); a.textContent = label;
+        dn.querySelector("button").addEventListener("click", function (ev2) { copy(d.body, ev2.target); });
+        attach(e.ref, dn);
+        break;
+      }
+      case "approval": {
+        setPill("Waiting for you", "waiting");
+        var ap = el("div", "approve it");
+        ap.innerHTML = "<b></b><span class=\"amt\"></span><span class=\"hint\"></span><div class=\"btns\"><button class=\"yes\" type=\"button\">Approve</button><button type=\"button\">Decline</button></div>";
+        ap.querySelector("b").textContent = e.question;
+        ap.querySelector(".amt").textContent = money(e.offer.currency, e.offer.amount) + " · " + e.offer.payment;
+        ap.querySelector(".hint").textContent = e.offer.business_name + " (demo) · " + e.offer.terms;
+        var decide = function (decision) {
+          ap.classList.add("decided");
+          ap.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+          run({ resume: e.state, decision: decision });
+        };
+        ap.querySelector(".yes").addEventListener("click", function () { decide("approve"); });
+        ap.querySelectorAll("button")[1].addEventListener("click", function () { decide("decline"); });
+        addFeed(ap);
+        awaitingVisitor = true;
+        break;
+      }
+      case "continue": nextPayload = { resume: e.state, decision: "continue" }; break;
+      case "plan": {
+        var h = $("headline"); h.hidden = false; h.textContent = e.plan.headline || "Done.";
+        e.plan.errands.forEach(function (x) {
+          var c = card(x.ref), st = c.querySelector(".st");
+          st.textContent = STATUS[x.status] || x.status; st.className = "st " + x.status;
+          var oc = c.querySelector(".outcome"); oc.textContent = x.outcome; oc.className = "outcome";
+          if (x.your_next_step) { var nx = c.querySelector(".next"); nx.hidden = false; nx.textContent = "Your next step: " + x.your_next_step; }
+        });
+        setPill("Done", "done");
+        addFeed(el("div", "it status", "Finished. Your errand board is below."));
+        break;
+      }
+      case "usage": {
+        var u = e.usage, total = u.input + u.cacheRead + u.cacheWrite;
+        $("mTurns").textContent = e.turns;
+        $("mCost").textContent = "$" + u.costUsd.toFixed(3);
+        $("mTokens").textContent = (total + u.output).toLocaleString();
+        $("mCache").textContent = total ? Math.round(u.cacheRead / total * 100) + "%" : "0%";
+        break;
+      }
+      case "error": setPill("Stopped", "err"); addFeed(el("div", "it error", esc(e.message))); break;
+    }
+  }
+
+  var awaitingVisitor = false, nextPayload = null;
+  function run(payload) {
+    busy = true; go.disabled = true; awaitingVisitor = false; nextPayload = null;
+    if (!payload.resume) setPill("Starting…", "working");
+    return fetch("/api/concierge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      .then(function (res) {
+        if (!res.ok || !res.body) {
+          return res.json().catch(function () { return {}; }).then(function (j) { onEvent({ t: "error", message: j.error || "The concierge is unavailable (" + res.status + ")." }); });
+        }
+        var reader = res.body.getReader(), dec = new TextDecoder(), buf = "";
+        function pump() {
+          return reader.read().then(function (r) {
+            if (r.done) return;
+            buf += dec.decode(r.value, { stream: true });
+            var i;
+            while ((i = buf.indexOf("\n")) >= 0) {
+              var line = buf.slice(0, i); buf = buf.slice(i + 1);
+              if (line.trim()) { try { onEvent(JSON.parse(line)); } catch (err) { console.error(err); } }
+            }
+            return pump();
+          });
+        }
+        return pump();
+      })
+      .catch(function () { onEvent({ t: "error", message: "Lost the connection to the concierge. Check your network and run again." }); })
+      .then(function () {
+        if (nextPayload) return run(nextPayload);
+        if (!awaitingVisitor) { busy = false; go.disabled = false; }
+      });
+  }
+
+  $("brief").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (busy) return;
+    var name = $("firstName").value.trim();
+    store("fm-first-name", name);
+    feed.innerHTML = ""; ledger.innerHTML = ""; board.innerHTML = ""; cards = {}; events = [];
+    $("headline").hidden = true; $("boardEmpty").hidden = false; $("ics").disabled = true;
+    $("icsHint").textContent = "Calendar entries the concierge creates will collect here.";
+    ["mTurns", "mTokens"].forEach(function (id) { $(id).textContent = "0"; });
+    $("mCost").textContent = "$0.000"; $("mCache").textContent = "0%";
+    run({ errands: errands.value, city: city.value, first_name: name, cap: Number(cap.value), ask_above: Number(ask.value) });
+    if (window.matchMedia("(max-width: 900px)").matches) feed.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+})();
+</script>
+</body>
+</html>

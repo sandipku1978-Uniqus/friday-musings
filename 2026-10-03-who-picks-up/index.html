@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Who Picks Up When Your Agent Calls?</title>
+<meta property="og:type" content="article">
+<meta property="og:title" content="Who picks up when your agent calls?">
+<meta property="og:description" content="Friday Musings: personal AI concierges, agent gateways, and the controls behind agent-made transactions. Send a concierge on an errand and watch the controls ledger fill up.">
+<meta property="og:url" content="https://friday-musings.vercel.app/2026-10-03-who-picks-up/">
+<meta property="og:image" content="https://friday-musings.vercel.app/2026-10-03-who-picks-up/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Friday Musings by Sandip Khetan: personal AI concierges, agent gateways, and the controls that make agent-made transactions trustworthy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: dark "switchboard" hero with a ringing agent call, then a three-pane simulator (errand · transcript · controls ledger), then the controller's view, bets, readiness check, and the musing itself. Uniqus brand: purple/magenta on white, Arial. */
+:root {
+  --bg: #FBFAFD;
+  --surface: #FFFFFF;
+  --surface-2: #F4F0F9;
+  --ink: #333333;
+  --ink-strong: #1E1A26;
+  --meta: #666666;
+  --line: #E3DCEC;
+  --purple: #482879;
+  --magenta: #B21E7D;
+  --rose: #C879AB;
+  --wash: #E1D9EB;
+  --pink-wash: #EED8E6;
+  --hero: #202429;
+  --hero-ink: #FFFFFF;
+  --hero-meta: #B9B3C4;
+  --bubble-me: #482879;
+  --bubble-me-ink: #FFFFFF;
+  --ok: #1E7A4F;
+  --warn: #9A5B00;
+  --bad: #B42318;
+  --ok-wash: #E3F2EA;
+  --warn-wash: #FBEFD9;
+  --bad-wash: #FBE4E1;
+  --font-body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --grad: linear-gradient(90deg, #B21E7D, #482879);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131418; --surface: #1B1D22; --surface-2: #231F2D; --ink: #E4E0EA; --ink-strong: #FFFFFF;
+    --meta: #A39EAD; --line: #34303D; --purple: #BBA6DC; --magenta: #E46BB0; --rose: #D79AC0;
+    --wash: #2B2340; --pink-wash: #3A2236; --hero: #0D0E11; --hero-ink: #FFFFFF; --hero-meta: #A9A3B6;
+    --bubble-me: #573594; --bubble-me-ink: #FFFFFF;
+    --ok: #5CC593; --warn: #E8A94A; --bad: #F2796E; --ok-wash: #173226; --warn-wash: #352812; --bad-wash: #3A1A18;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131418; --surface: #1B1D22; --surface-2: #231F2D; --ink: #E4E0EA; --ink-strong: #FFFFFF;
+  --meta: #A39EAD; --line: #34303D; --purple: #BBA6DC; --magenta: #E46BB0; --rose: #D79AC0;
+  --wash: #2B2340; --pink-wash: #3A2236; --hero: #0D0E11; --hero-ink: #FFFFFF; --hero-meta: #A9A3B6;
+  --bubble-me: #573594; --bubble-me-ink: #FFFFFF;
+  --ok: #5CC593; --warn: #E8A94A; --bad: #F2796E; --ok-wash: #173226; --warn-wash: #352812; --bad-wash: #3A1A18;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55; margin: 0; }
+.wrap { max-width: 1140px; margin: 0 auto; padding-inline: 20px; }
+h1, h2, h3 { text-wrap: balance; color: var(--ink-strong); line-height: 1.12; margin: 0; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); letter-spacing: -0.02em; color: var(--purple); }
+h3 { font-size: 1.05rem; }
+p { margin: 0; }
+a { color: var(--magenta); }
+.eyebrow { font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--magenta); }
+.mono { font-family: var(--font-mono); }
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; }
+.gradbar { height: 6px; background: var(--grad); }
+
+/* ---------- Hero ---------- */
+.hero { background: var(--hero); color: var(--hero-ink); padding-block: 28px 56px; }
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.hero-top img { width: 132px; height: auto; display: block; }
+.hero-top .issue { font-size: 0.78rem; color: var(--hero-meta); letter-spacing: 0.08em; text-transform: uppercase; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 48px; align-items: center; margin-top: 44px; }
+.hero h1 { color: var(--hero-ink); font-size: clamp(2.3rem, 6vw, 4.4rem); font-weight: 700; letter-spacing: -0.035em; }
+.hero h1 em { font-style: normal; background: linear-gradient(90deg, #E46BB0, #A28BBD); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero .dek { margin-top: 20px; font-size: 1.15rem; color: #D9D4E2; max-width: 34em; }
+.hero .byline { margin-top: 24px; font-size: 0.9rem; color: var(--hero-meta); }
+.hero .byline b { color: #FFFFFF; }
+
+.call { background: #2A2F36; border: 1px solid #3B414A; border-radius: 22px; padding: 22px; position: relative; overflow: hidden; }
+.call-head { display: flex; align-items: center; gap: 14px; }
+.ring { width: 52px; height: 52px; border-radius: 50%; background: var(--grad); position: relative; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 0.8rem; }
+.ring::before, .ring::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid #E46BB0; opacity: 0; animation: ring 1.8s ease-out infinite; }
+.ring::after { animation-delay: 0.6s; }
+@keyframes ring { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.45); opacity: 0; } }
+.call.answered .ring::before, .call.answered .ring::after { animation: none; }
+.call-label { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #E46BB0; font-weight: 700; }
+.call-who { font-size: 1.15rem; font-weight: 700; color: #fff; }
+.call-env { margin-top: 16px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; color: #CFC8DA; background: #1F2328; border-radius: 12px; padding: 12px 14px; overflow-x: auto; white-space: pre; }
+.call-env .k { color: #A28BBD; }
+.call-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.call-actions button { flex: 1 1 140px; border-radius: 999px; padding: 11px 14px; border: 0; font-weight: 700; font-size: 0.92rem; }
+.btn-hang { background: #4A2026; color: #FFC9C2; }
+.btn-ans { background: #1D4A35; color: #BFF0D6; }
+.call-out { margin-top: 14px; font-size: 0.92rem; color: #E8E4EE; min-height: 3em; }
+.call-out .yr { font-family: var(--font-mono); font-size: 0.75rem; color: #E46BB0; display: block; margin-bottom: 2px; }
+
+/* ---------- Sections ---------- */
+section.block { padding-block: 64px; }
+.lede { max-width: 44em; margin-top: 14px; font-size: 1.06rem; }
+.section-head { display: grid; gap: 4px; }
+
+.race { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+.race article { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 8px; align-content: start; }
+.race .who { font-size: 0.74rem; color: var(--meta); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+.race h3 { color: var(--purple); font-size: 1.25rem; }
+.race .when { font-family: var(--font-mono); font-size: 0.75rem; color: var(--magenta); }
+.race p { font-size: 0.92rem; }
+.race a { font-size: 0.8rem; }
+
+/* ---------- Simulator ---------- */
+.sim { margin-top: 28px; display: grid; grid-template-columns: 270px minmax(0, 1fr) 290px; gap: 16px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; min-width: 0; }
+.panel h3 { font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--meta); margin-bottom: 10px; }
+.errands { display: grid; gap: 8px; }
+.errand { text-align: left; background: var(--surface-2); border: 1px solid transparent; border-radius: 12px; padding: 10px 12px; color: var(--ink); display: grid; gap: 2px; }
+.errand b { color: var(--ink-strong); font-size: 0.95rem; }
+.errand span { font-size: 0.78rem; color: var(--meta); }
+.errand[aria-pressed="true"] { border-color: var(--magenta); background: var(--pink-wash); }
+.ctl { margin-top: 18px; display: grid; gap: 12px; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.92rem; font-weight: 700; color: var(--ink-strong); }
+.switch input { appearance: none; width: 46px; height: 26px; border-radius: 999px; background: var(--line); position: relative; flex: none; cursor: pointer; transition: background .2s; }
+.switch input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.switch input:checked { background: var(--magenta); }
+.switch input:checked::after { transform: translateX(20px); }
+.hint { font-size: 0.78rem; color: var(--meta); }
+.range { display: grid; gap: 4px; }
+.range label { display: flex; justify-content: space-between; font-size: 0.85rem; gap: 8px; }
+.range output { font-family: var(--font-mono); font-size: 0.8rem; color: var(--purple); font-variant-numeric: tabular-nums; }
+.range input { width: 100%; accent-color: var(--magenta); }
+.range input:disabled { opacity: 0.4; }
+.run { margin-top: 6px; width: 100%; padding: 12px; border-radius: 999px; border: 0; background: var(--grad); color: #fff; font-weight: 700; font-size: 1rem; }
+
+.chat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.chat-head h3 { margin: 0; }
+.chip { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.04em; }
+.chip.on { background: var(--ok-wash); color: var(--ok); }
+.chip.off { background: var(--bad-wash); color: var(--bad); }
+.chat { height: 470px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 8px; scroll-behavior: smooth; }
+.msg { max-width: 86%; display: grid; gap: 3px; animation: pop .25s ease-out; }
+@keyframes pop { from { transform: translateY(4px); opacity: .4; } to { transform: none; opacity: 1; } }
+.msg .who { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--meta); }
+.msg .bub { padding: 9px 13px; border-radius: 14px; font-size: 0.93rem; overflow-wrap: anywhere; }
+.msg.you { align-self: flex-end; text-align: right; }
+.msg.you .bub { background: var(--pink-wash); color: var(--ink-strong); border-bottom-right-radius: 4px; text-align: left; }
+.msg.me .bub { background: var(--bubble-me); color: var(--bubble-me-ink); border-bottom-left-radius: 4px; }
+.msg.biz .bub { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-strong); border-bottom-left-radius: 4px; }
+.msg.biz .who { color: var(--purple); }
+.env { font-family: var(--font-mono); font-size: 0.72rem; color: var(--purple); background: var(--wash); border-radius: 8px; padding: 6px 9px; overflow-x: auto; white-space: pre; }
+.msg.me .env { background: rgba(255,255,255,.12); color: #E9DFF7; margin-top: 6px; }
+.sysline { align-self: center; max-width: 100%; display: grid; gap: 4px; justify-items: center; text-align: center; font-size: 0.8rem; color: var(--meta); }
+.typing { align-self: flex-start; font-size: 0.8rem; color: var(--meta); font-style: italic; }
+.approve { align-self: flex-end; background: var(--surface); border: 2px solid var(--magenta); border-radius: 14px; padding: 12px; max-width: 86%; display: grid; gap: 10px; }
+.approve p { font-size: 0.9rem; color: var(--ink-strong); }
+.approve .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.approve button { border-radius: 999px; padding: 8px 16px; border: 0; font-weight: 700; }
+.approve .yes { background: var(--magenta); color: #fff; }
+.approve .no { background: var(--surface-2); color: var(--ink-strong); border: 1px solid var(--line); }
+.approve.done { opacity: .6; }
+
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.metric { background: var(--surface-2); border-radius: 12px; padding: 10px; display: grid; gap: 2px; }
+.metric span { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--meta); font-weight: 700; }
+.metric b { font-family: var(--font-mono); font-size: 1.1rem; color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+
+.ledger { display: grid; gap: 8px; max-height: 560px; overflow-y: auto; }
+.lrow { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 10px; padding: 9px 10px; border-radius: 10px; background: var(--surface-2); animation: pop .25s ease-out; }
+.lrow i { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; background: var(--meta); }
+.lrow.ok i { background: var(--ok); } .lrow.warn i { background: var(--warn); } .lrow.bad i { background: var(--bad); }
+.lrow b { display: block; font-size: 0.85rem; color: var(--ink-strong); }
+.lrow small { display: block; font-size: 0.78rem; color: var(--meta); overflow-wrap: anywhere; }
+.lrow .ts { font-family: var(--font-mono); font-size: 0.68rem; color: var(--purple); }
+.sim-note { margin-top: 12px; font-size: 0.78rem; color: var(--meta); }
+
+.live-cta { margin-top: 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--hero); color: #fff; border-radius: 16px; padding: 18px 20px; }
+.live-cta p { color: #D9D4E2; font-size: .95rem; max-width: 46em; }
+.live-cta b { color: #fff; font-size: 1.1rem; display: block; margin-bottom: 4px; }
+.live-cta a { background: var(--grad); color: #fff; text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 999px; white-space: nowrap; }
+
+/* ---------- Two front doors ---------- */
+.doors { margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; border: 1px solid var(--line); }
+.seg button { border: 0; background: transparent; padding: 8px 16px; border-radius: 999px; font-weight: 700; color: var(--meta); font-size: 0.9rem; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--magenta); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.door { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.door-bar { display: flex; gap: 6px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--surface-2); font-family: var(--font-mono); font-size: 0.75rem; color: var(--meta); overflow-x: auto; white-space: nowrap; }
+.door-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); flex: none; }
+.human-site { padding: 22px; display: grid; gap: 12px; }
+.human-site .rname { font-size: 1.6rem; font-weight: 700; color: var(--ink-strong); letter-spacing: -0.02em; }
+.human-site .rsub { color: var(--meta); font-size: 0.9rem; }
+.human-site .hero-img { height: 120px; border-radius: 12px; background: radial-gradient(circle at 25% 40%, #E9A23B 0 18%, transparent 19%), radial-gradient(circle at 70% 60%, #B21E7D 0 14%, transparent 15%), linear-gradient(135deg, #482879, #202429); }
+.human-site .fake-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.human-site .fake-form div { border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: 0.8rem; color: var(--meta); }
+.captcha { display: flex; align-items: center; gap: 10px; border: 1px dashed var(--line); border-radius: 8px; padding: 10px; font-size: 0.82rem; color: var(--meta); }
+.captcha span { width: 18px; height: 18px; border: 2px solid var(--meta); border-radius: 4px; flex: none; }
+.agent-site pre { margin: 0; padding: 18px; font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.6; overflow-x: auto; color: var(--ink); }
+.agent-site .s { color: var(--magenta); } .agent-site .n { color: var(--purple); }
+.doors-copy { display: grid; gap: 16px; }
+.doors-copy p { font-size: 1rem; }
+.phone-strip { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 6px; font-size: 0.86rem; }
+.phone-strip .mono { font-size: 0.74rem; color: var(--purple); }
+
+/* ---------- Controls ---------- */
+.ctrl { background: var(--surface-2); }
+.tbl-wrap { overflow-x: auto; margin-top: 28px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 0.92rem; }
+th { background: #482879; color: #FFFFFF; text-align: left; padding: 12px 14px; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+td { padding: 13px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+td:first-child { font-weight: 700; color: var(--purple); white-space: nowrap; }
+tbody tr:nth-child(even) td { background: var(--surface-2); }
+.callout { margin-top: 24px; background: var(--wash); border-left: 5px solid var(--magenta); border-radius: 4px 14px 14px 4px; padding: 18px 20px; display: grid; gap: 6px; max-width: 54em; }
+.callout b { color: var(--purple); }
+
+/* ---------- Bets ---------- */
+.bets { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.bet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; grid-template-rows: auto 1fr auto; }
+.bet .yr { font-family: var(--font-mono); font-size: 0.8rem; color: var(--magenta); font-weight: 600; }
+.bet p { font-size: 0.97rem; color: var(--ink-strong); }
+.vote { display: flex; gap: 8px; }
+.vote button { flex: 1; border-radius: 999px; padding: 7px 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font-size: 0.85rem; font-weight: 700; }
+.vote button[aria-pressed="true"].agree { background: var(--ok-wash); color: var(--ok); border-color: var(--ok); }
+.vote button[aria-pressed="true"].doubt { background: var(--bad-wash); color: var(--bad); border-color: var(--bad); }
+.tally { margin-top: 14px; font-size: 0.9rem; color: var(--meta); }
+
+/* ---------- Readiness ---------- */
+.ready { margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.qs { display: grid; gap: 8px; }
+.q { display: flex; justify-content: space-between; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 0.93rem; }
+.q span { min-width: 0; }
+.score { background: var(--hero); color: #fff; border-radius: 18px; padding: 24px; display: grid; gap: 12px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.score .num { font-family: var(--font-mono); font-size: 3.4rem; font-weight: 600; line-height: 1; }
+.score .num small { font-size: 1.1rem; color: #A9A3B6; }
+.score .tier { font-size: 1.3rem; font-weight: 700; color: #E46BB0; }
+.score p { color: #D9D4E2; font-size: 0.95rem; }
+.meter { height: 8px; background: #3B414A; border-radius: 999px; overflow: hidden; }
+.meter div { height: 100%; background: var(--grad); width: 0; transition: width .4s; }
+
+/* ---------- Musing ---------- */
+.essay { max-width: 42em; display: grid; gap: 16px; margin-top: 18px; font-size: 1.07rem; }
+.essay p:first-child::first-letter { font-size: 3.2em; float: left; line-height: 0.9; padding: 4px 8px 0 0; color: var(--magenta); font-weight: 700; }
+.essay blockquote { margin: 0; padding: 4px 0 4px 18px; border-left: 4px solid var(--magenta); font-size: 1.15rem; color: var(--purple); font-weight: 700; }
+.post { margin-top: 36px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; max-width: 42em; display: grid; gap: 12px; }
+.post-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.post textarea { width: 100%; min-height: 330px; border: 1px solid var(--line); border-radius: 10px; padding: 14px; font: 0.9rem/1.55 var(--font-body); background: var(--surface-2); color: var(--ink); resize: vertical; }
+.copy { border-radius: 999px; padding: 9px 18px; border: 0; background: var(--grad); color: #fff; font-weight: 700; }
+.sources { margin-top: 36px; font-size: 0.86rem; color: var(--meta); display: grid; gap: 6px; max-width: 54em; }
+.sources ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+
+footer { background: var(--hero); color: #CFC8DA; padding-block: 36px; font-size: 0.85rem; }
+footer .wrap { display: grid; gap: 12px; }
+footer img { width: 110px; height: auto; }
+footer a { color: #E46BB0; }
+
+@media (max-width: 1040px) {
+  .sim { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sim .chat-panel { grid-column: 1 / -1; order: -1; }
+  .race { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .hero-grid, .doors, .ready, .sim { grid-template-columns: minmax(0, 1fr); }
+  .race, .bets { grid-template-columns: minmax(0, 1fr); }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chat { height: 420px; }
+  .score { position: static; }
+  .call-env { white-space: pre-wrap; }
+  .wrap { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <img src="uniqus-logo-white.png" alt="Uniqus Consultech" width="132" height="46">
+      <span class="issue">Friday Musings · 3 October 2026</span>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow" style="color:#E46BB0">The concierge economy</p>
+        <h1 style="margin-top:12px">Who picks up when <em>your agent</em> calls?</h1>
+        <p class="dek">WhatsApp turned every business into a chat window. Personal agents like Muse, dots and Instinct will turn every business into an endpoint. That changes how we buy, and it changes what a control looks like.</p>
+        <p class="byline"><b>Sandip Khetan</b> · Co-Founder, Uniqus Consultech · 7 min read · <a href="/concierge/" style="color:#E46BB0">or give a live concierge your chores</a></p>
+      </div>
+      <div class="call" id="call">
+        <div class="call-head">
+          <div class="ring" aria-hidden="true">AI</div>
+          <div>
+            <div class="call-label">Incoming call · agent caller</div>
+            <div class="call-who">Concierge for S. Khetan</div>
+          </div>
+        </div>
+        <div class="call-env"><span class="k">intent  </span> reserve.table · party 4 · Thu 20:00
+<span class="k">identity</span> signed agent key · verified human
+<span class="k">mandate </span> cap AED 1,000 · ask above AED 500
+<span class="k">expires </span> in 24h · revocable</div>
+        <div class="call-actions">
+          <button class="btn-hang" id="hang" type="button">Hang up</button>
+          <button class="btn-ans" id="answer" type="button">Answer as an agent</button>
+        </div>
+        <p class="call-out" id="callOut" aria-live="polite"><span class="yr">You are the restaurant.</span>An AI is calling on behalf of a paying guest. What do you do?</p>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="gradbar"></div>
+
+<main>
+  <section class="block">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">September 2026</p>
+        <h2>Four concierges in eight weeks</h2>
+      </div>
+      <p class="lede">The personal assistant we were promised for fifteen years arrived all at once. Each one has its own cloud computer, remembers your life, and wants to run errands for you. The race is to become your default.</p>
+      <div class="race">
+        <article>
+          <span class="who">Meta</span><h3>Muse</h3><span class="when">Launched 8 Sep</span>
+          <p>Free and paid tiers, reachable on WhatsApp. Books travel, sends email, and places phone calls to US businesses. A separate "Sentinel" agent reviews its actions, and you get an audit trail.</p>
+          <a href="https://about.fb.com/news/2026/09/introducing-muse-personal-ai-agent/" target="_blank" rel="noopener">Meta announcement</a>
+        </article>
+        <article>
+          <span class="who">OpenAI</span><h3>dots</h3><span class="when">Launched 29 Sep</span>
+          <p>Always-on agents on GPT-6 Astra with 4,000+ app connections, in ChatGPT, Slack and Teams. Custom Rules to allow, require approval for, or block actions. "Specialist dots" get their own identity for access management.</p>
+          <a href="https://openai.com/index/introducing-dots/" target="_blank" rel="noopener">OpenAI announcement</a>
+        </article>
+        <article>
+          <span class="who">Startup</span><h3>Instinct</h3><span class="when">Invite only</span>
+          <p>No app to learn. You text or call it, and it texts or calls you first. It reads email, messages, screen, audio and location, and now has its own email addresses and phone calls. Reported in talks at a $10B valuation.</p>
+          <a href="https://www.axios.com/2026/09/20/ai-assistant-openai-meta-muse-instinct-grok-apple" target="_blank" rel="noopener">Axios, 20 Sep</a>
+        </article>
+        <article>
+          <span class="who">SpaceXAI</span><h3>Grok Bot</h3><span class="when">Beta since Aug</span>
+          <p>Persistent bots, each with its own cloud machine, that sign into your apps, learn a workflow once and keep working around the clock. They come back only when something needs your approval.</p>
+          <a href="https://sharick.ai/blog/personal-ai-agents/" target="_blank" rel="noopener">Comparison, 28 Sep</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="simulator" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Play with it</p>
+        <h2>Send your concierge out</h2>
+      </div>
+      <p class="lede">Pick an errand, set your mandate, and decide whether the business on the other end has an agent gateway. Then watch the two agents talk. The ledger on the right is what your auditor will eventually ask for.</p>
+
+      <div class="sim">
+        <div class="panel">
+          <h3>1 · The errand</h3>
+          <div class="errands" id="errands"></div>
+          <div class="ctl">
+            <h3 style="margin:8px 0 0">2 · The counterparty</h3>
+            <label class="switch" for="gw">Business has an agent gateway <input type="checkbox" id="gw" checked></label>
+            <p class="hint" id="gwHint">It publishes what it can do, verifies agents, and answers in structured terms.</p>
+            <h3 style="margin:8px 0 0">3 · Your mandate</h3>
+            <div class="range"><label for="cap">Spending cap <output id="capOut"></output></label><input type="range" id="cap"></div>
+            <div class="range"><label for="ask">Ask me above <output id="askOut"></output></label><input type="range" id="ask"></div>
+            <p class="hint" id="mandateHint"></p>
+            <button class="run" id="run" type="button">Run the errand</button>
+          </div>
+        </div>
+
+        <div class="panel chat-panel">
+          <div class="chat-head">
+            <h3>Transcript</h3>
+            <span class="chip on" id="modeChip">Agent gateway</span>
+          </div>
+          <div class="chat" id="chat" aria-live="polite"></div>
+          <div class="metrics">
+            <div class="metric"><span>Elapsed</span><b id="mClock">0s</b></div>
+            <div class="metric"><span>Your time</span><b id="mYou">0 min</b></div>
+            <div class="metric"><span>Hang-ups</span><b id="mHang">0</b></div>
+            <div class="metric"><span>Signed receipts</span><b id="mRcpt">0</b></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Controls ledger</h3>
+          <div class="ledger" id="ledger"></div>
+        </div>
+      </div>
+      <div class="live-cta">
+        <p><b>This simulator is scripted. The playground is live.</b>Give a real AI concierge your own errands, in English or Hinglish. It books with demo businesses, builds your calendar and drafts your messages, and asks before it spends.</p>
+        <a href="/concierge/">Try the live concierge</a>
+      </div>
+      <p class="sim-note">Simulation. The businesses, numbers and handshake messages are illustrative. The handshake borrows from real open standards: A2A-style agent cards, Web Bot Auth for agent identity, PACT tokens for a vouched human, and x402 for agent payments.</p>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The gateway idea</p>
+        <h2>Same business, two front doors</h2>
+      </div>
+      <div class="doors">
+        <div>
+          <div class="seg" role="group" aria-label="View the site as">
+            <button type="button" id="viewHuman" aria-pressed="true">Human view</button>
+            <button type="button" id="viewAgent" aria-pressed="false">Agent view</button>
+          </div>
+          <div class="door">
+            <div class="door-bar"><i></i><i></i><i></i><span id="doorUrl">saffronroom.example</span></div>
+            <div class="human-site" id="humanSite">
+              <div class="hero-img" role="img" aria-label="Restaurant banner"></div>
+              <div><div class="rname">Saffron Room</div><div class="rsub">Modern Indian · Gate Village, DIFC · Open 7pm to midnight</div></div>
+              <div class="fake-form"><div>Date</div><div>Guests</div><div>Time</div></div>
+              <div class="captcha"><span></span>I'm not a robot</div>
+            </div>
+            <div class="agent-site" id="agentSite" hidden>
+<pre>{
+  <span class="s">"name"</span>: <span class="s">"Saffron Room DIFC"</span>,
+  <span class="s">"agent_channels"</span>: {
+    <span class="s">"web"</span>:   <span class="s">"https://saffronroom.example/agent"</span>,
+    <span class="s">"voice"</span>: <span class="s">"main line · agent handshake supported"</span>
+  },
+  <span class="s">"capabilities"</span>: [
+    { <span class="s">"intent"</span>: <span class="s">"reserve.table"</span>,
+      <span class="s">"inputs"</span>: [<span class="s">"party_size"</span>, <span class="s">"datetime"</span>, <span class="s">"dietary"</span>],
+      <span class="s">"hold"</span>: { <span class="s">"amount"</span>: <span class="n">100</span>, <span class="s">"currency"</span>: <span class="s">"AED"</span>, <span class="s">"per"</span>: <span class="s">"guest"</span> } },
+    { <span class="s">"intent"</span>: <span class="s">"menu.read"</span>, <span class="s">"format"</span>: <span class="s">"markdown"</span> }
+  ],
+  <span class="s">"accepts"</span>: {
+    <span class="s">"agent_identity"</span>: [<span class="s">"web-bot-auth"</span>],
+    <span class="s">"human_vouch"</span>:    [<span class="s">"pact"</span>],
+    <span class="s">"payment"</span>:        [<span class="s">"card-hold"</span>, <span class="s">"x402"</span>]
+  },
+  <span class="s">"humans_only"</span>: [<span class="s">"private events"</span>, <span class="s">"complaints"</span>],
+  <span class="s">"receipts"</span>: <span class="s">"signed"</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="doors-copy">
+          <p>The human page sells with a photograph and stops bots with a CAPTCHA. The agent page lists what the business can do, what it accepts, and what it keeps for humans. Same restaurant, same tables.</p>
+          <p>Cloudflare put it plainly in August. An agent "doesn't render your CSS, see your hero image, or click your ads. But it has a paying human on the other end." Then the line every CMO should pin to the wall: <b>"Block it and you block your customer."</b></p>
+          <div class="phone-strip">
+            <b>The phone line needs a gateway too</b>
+            <span>Meta's own staff found insurers "keep hanging up on Muse when they hear it is AI." Meta's workaround was to quietly hand some calls to human contractors. It rolled that back after employees raised privacy concerns.</span>
+            <span class="mono">IVR today: "Press 1 for reservations"<br>IVR tomorrow: "Agents, present your mandate"</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block ctrl">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The controller's view</p>
+        <h2>Every agent errand is a delegated transaction</h2>
+      </div>
+      <p class="lede">We already know how to govern delegation. It's called a delegation-of-authority matrix, and we test it every year. The agent era doesn't need new philosophy. It needs the old assertions applied to a new kind of actor.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Assertion</th><th>The question your auditor will ask</th><th>What good looks like</th></tr></thead>
+          <tbody>
+            <tr><td>Authorization</td><td>Did a human give this agent authority for this kind of transaction, within limits?</td><td>A signed mandate with scope, spending cap, approval threshold and expiry. A DOA matrix, per agent.</td></tr>
+            <tr><td>Identity (KYA)</td><td>Which agent acted, and for whom?</td><td>A cryptographic agent identity plus a vouched human principal. Know Your Agent, alongside KYC. No shared passwords or relayed OTPs.</td></tr>
+            <tr><td>Accuracy</td><td>Is what was agreed what was recorded?</td><td>Structured offers and commits instead of a paraphrased phone call. The receipt carries the terms.</td></tr>
+            <tr><td>Completeness</td><td>Is every agent action in the log, including the failures and refusals?</td><td>Append-only activity logs on both sides, with agent receipts reconciled to the ERP and the bank feed.</td></tr>
+            <tr><td>Segregation and revocation</td><td>Can the agent that requests also approve? Can you switch it off at 2am?</td><td>Request and approval split between agent and human, or between keys. A kill switch. Day-one deprovisioning.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <b>Your next user access review will have new names in it</b>
+        <p>OpenAI is previewing specialist dots with "their own identity for access management", plus credentials into a company's systems of record. Those are users. They need provisioning, periodic access review, and termination like everyone else, and they work weekends. COSO Principle 11 (general controls over technology) just gained a new population.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Where this goes</p>
+        <h2>Six bets. Tell me where I'm wrong.</h2>
+      </div>
+      <div class="bets" id="bets"></div>
+      <p class="tally" id="tally"></p>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">For CFOs and business owners</p>
+        <h2>Would your business pick up?</h2>
+      </div>
+      <p class="lede">Six questions. The example answers are a typical mid-size company today. Change them to match yours.</p>
+      <div class="ready">
+        <div class="qs" id="qs"></div>
+        <div class="score" aria-live="polite">
+          <span class="eyebrow" style="color:#A9A3B6">Agent readiness</span>
+          <div class="num" id="scoreNum">0<small>/6</small></div>
+          <div class="meter"><div id="meter"></div></div>
+          <div class="tier" id="tier"></div>
+          <p id="tierText"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block ctrl" id="musing">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The musing</p>
+        <h2>From "are you on WhatsApp?" to "can my agent talk to yours?"</h2>
+      </div>
+      <div class="essay">
+        <p>A Meta employee asked Muse to call his insurance company. The insurer kept hanging up the moment it heard an AI. Meta's fix, tested quietly and then rolled back, was to hand some of those calls to human contractors. One of the most capable consumer agents ever shipped needed a person to get through a phone tree.</p>
+        <p>That one anecdote tells you where the bottleneck is. The agents are good enough. The front doors aren't ready for them.</p>
+        <p>Remember when every business, from the corner pharmacy in Pune to the bank in Dubai, had to get a WhatsApp number? Customers didn't want to visit a website or wait on hold. They wanted to message. Businesses went where the conversation was.</p>
+        <p>The next shift is bigger. Your customer won't message you. Their concierge will. It will compare three quotes in the time it takes you to say "please hold", and it will not tolerate a CAPTCHA. Businesses that can answer an agent in structured terms will get the booking. Businesses that hang up will lose a customer without ever knowing one called.</p>
+        <blockquote>WhatsApp made every business a chat. Agents will make every business an endpoint.</blockquote>
+        <p>So someone has to build the agent gateway: a website that publishes what it can do for machines, a phone line that recognises an agent caller and switches to a structured channel, a way to check which agent is calling and whose authority it carries, and a receipt both sides can rely on. The pieces are appearing (agent cards, Web Bot Auth, PACT, x402). The plumbing is the easy part.</p>
+        <p>The hard part is the one I've spent my career on. Every agent errand is a delegated transaction. Delegation needs authorization, limits, segregation and evidence. If your dot approved a purchase order at 2am, who owned that control? Who reviewed its access last quarter? Where is the receipt?</p>
+        <p>In the WhatsApp era the question was "are you on WhatsApp?" In the agent era it will be "can my agent talk to yours?" For those of us in controls, there's a follow-up: "can you prove what it agreed to?"</p>
+        <p>Have a great weekend. If your concierge is reading this for you, say hello.</p>
+      </div>
+
+      <div class="post">
+        <div class="post-head">
+          <b>LinkedIn post, ready to paste</b>
+          <button class="copy" id="copyPost" type="button">Copy post</button>
+        </div>
+        <label for="postText" class="hint">Edit freely. Check the link matches your deployed domain.</label>
+        <textarea id="postText"></textarea>
+        <p class="hint" id="copyMsg" aria-live="polite"></p>
+      </div>
+
+      <div class="sources">
+        <b>Sources</b>
+        <ol>
+          <li><a href="https://about.fb.com/news/2026/09/introducing-muse-personal-ai-agent/" target="_blank" rel="noopener">Meta, Introducing Muse</a> (8 Sep 2026)</li>
+          <li><a href="https://www.reuters.com/business/meta-testing-human-concierge-its-new-personal-ai-agent-muse-2026-09-22/" target="_blank" rel="noopener">Reuters, Meta testing a "human concierge" for Muse</a> (22 Sep 2026)</li>
+          <li><a href="https://openai.com/index/introducing-dots/" target="_blank" rel="noopener">OpenAI, Introducing dots</a> (29 Sep 2026)</li>
+          <li><a href="https://www.axios.com/2026/09/20/ai-assistant-openai-meta-muse-instinct-grok-apple" target="_blank" rel="noopener">Axios, The tech battle to build your AI assistant</a> (20 Sep 2026)</li>
+          <li><a href="https://blog.cloudflare.com/the-agentic-internet/" target="_blank" rel="noopener">Cloudflare, Building an open Agentic Internet</a> (6 Aug 2026)</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <img src="uniqus-logo-white.png" alt="Uniqus Consultech" width="110" height="38">
+    <p>Friday Musings by Sandip Khetan, Co-Founder and Global Head of Accounting &amp; Reporting Consulting, Uniqus Consultech. Uniqus is a global tech-enabled consulting company across Accounting &amp; Reporting, Governance, Risk &amp; Compliance, Sustainability &amp; Climate, and Tech Consulting, with offices in the USA, the Middle East and India. <a href="https://www.uniqus.com" target="_blank" rel="noopener">uniqus.com</a></p>
+    <p>Personal views, not advice. The simulator, businesses and protocol messages are illustrative. Product facts are as reported in the linked sources on 3 October 2026.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); localStorage.setItem(k, JSON.stringify(v)); } catch (e) { return null; } }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  /* ---------- Hero call ---------- */
+  var call = $("call"), callOut = $("callOut");
+  $("hang").addEventListener("click", function () {
+    call.classList.add("answered");
+    callOut.innerHTML = '<span class="yr">2026 · what happens today</span>You hang up. The guest\'s concierge books the restaurant next door, which answered. You never learn a customer called.';
+  });
+  $("answer").addEventListener("click", function () {
+    call.classList.add("answered");
+    callOut.innerHTML = '<span class="yr">2028 · the gateway era</span>Your gateway checks the agent\'s key and its mandate, offers 20:15 on the terrace with an AED 400 hold, and sends a signed receipt. About ten seconds. <a href="#simulator">Run it yourself</a>.';
+  });
+
+  /* ---------- Errands ---------- */
+  var ERRANDS = {
+    dinner: {
+      label: "Dinner in Dubai", sub: "UAE · restaurant", cur: "AED", locale: "en-AE", frac: 0,
+      ask: "Book a table for 4 near DIFC on Thursday around 8pm. One of us is vegetarian.",
+      biz: "Saffron Room, DIFC", domain: "saffronroom.example",
+      caps: "reserve.table, menu.read", amount: 400, cap: 1000, askAbove: 500, max: 2000, step: 50,
+      greet: "Verified agent, verified guest. Welcome back. What can we do for you?",
+      intent: "reserve.table party=4 when=Thu 20:00±30m diet=veg:1",
+      intentText: "Table for 4, Thursday around 8pm, one vegetarian.",
+      offer: "Thursday 20:15, terrace table for 4. Vegetarian tasting menu available. Card hold of AED 400, released if you cancel before Wednesday 18:00.",
+      offerLedger: "Thu 20:15 · hold AED 400 · free cancel to Wed 18:00",
+      approveText: "Place an AED 400 card hold for Thursday 20:15, table for 4?",
+      commitEnv: "reserve.table offer=SR-4471 pay=card-hold:400AED",
+      commit: "Confirmed. Booking SR-4471, receipt signed and sent to your calendar.",
+      receipt: "rcpt_SR-4471 · AED 400 hold · signed by both parties",
+      legacy: function () { return [
+        { who: "me", text: "Saffron Room has no agent channel. I'll call their main line.", t: 2 },
+        { who: "sys", text: "Dialing main line · automated menu detected", t: 8 },
+        { who: "biz", label: "Phone menu", text: "Thank you for calling Saffron Room. For reservations, press 1. For private events, press 2.", t: 14 },
+        { who: "sys", text: "Pressed 1 · on hold, 6 min 40 s of music", t: 400 },
+        { who: "biz", label: "Host", text: "Hello, Saffron Room. Sorry, is this an automated call? We can't take bookings from AI. The guest needs to call us.", t: 18 },
+        { who: "sys", text: "Call ended by the business", t: 1, hang: true, ledger: ["bad", "Hang-up", "Counterparty refused an AI caller"] },
+        { who: "me", text: "I tried the website next. The booking form ends in a CAPTCHA, and I won't try to defeat it.", t: 70, ledger: ["warn", "Web form blocked", "CAPTCHA · agent did not attempt a bypass"] },
+        { who: "me", to: "you", text: "I couldn't book it. Here's a WhatsApp message you can send them yourself: \"Hi, table for 4 this Thursday around 8pm, one vegetarian. Thanks, Sandip.\"", t: 3, you: 6, ledger: ["bad", "Outcome", "Not booked · no receipt · evidence is a call transcript"] }
+      ]; }
+    },
+    flight: {
+      label: "Flight change, India", sub: "India · airline", cur: "INR", locale: "en-IN", frac: 0,
+      ask: "Move my Friday Mumbai to Delhi flight to the 6:30 am departure. Aisle seat.",
+      biz: "Skyline Air", domain: "skylineair.example",
+      caps: "booking.change, seat.select, fare.quote", amount: 4850, cap: 10000, askAbove: 3000, max: 20000, step: 250,
+      greet: "Agent and passenger verified. Booking PNR K7Q2LM found.",
+      intent: "booking.change pnr=K7Q2LM to=Fri 06:30 BOM-DEL seat=aisle",
+      intentText: "Move PNR K7Q2LM to the Friday 06:30 departure, aisle seat.",
+      offer: "Friday 06:30 BOM to DEL, seat 3C (aisle). Fare difference ₹4,850 including taxes. No change fee on your fare class.",
+      offerLedger: "Fri 06:30 · seat 3C · ₹4,850 all-in",
+      approveText: "Pay ₹4,850 to move to the Friday 06:30 flight, seat 3C?",
+      commitEnv: "booking.change offer=K7Q2LM-C2 pay=x402:INR4850",
+      commit: "Changed. New boarding pass issued for seat 3C. Tax invoice with GSTIN attached to the receipt.",
+      receipt: "rcpt_K7Q2LM-C2 · ₹4,850 · GST invoice attached",
+      legacy: function () { return [
+        { who: "me", text: "Skyline Air has no agent channel. I'll use their website the way you would.", t: 2 },
+        { who: "sys", text: "Browser session · Manage booking", t: 35 },
+        { who: "biz", label: "Website", text: "We've sent a one-time password to +91 98XXX XX210. Enter it to continue.", t: 6 },
+        { who: "me", to: "you", text: "The airline texted you a one-time password. Can you send it to me?", t: 2 },
+        { who: "you", text: "It's 482913.", t: 45, you: 1, ledger: ["warn", "OTP relayed through chat", "A shared secret left your phone"] },
+        { who: "biz", label: "Website", text: "Session expired. Please log in again.", t: 120 },
+        { who: "sys", text: "Retried login with a new OTP · seat map upsell dismissed twice", t: 160, you: 1 },
+        { who: "biz", label: "Website", text: "06:30 BOM to DEL available. Fare difference ₹4,850. Pay now.", t: 8, ledger: ["ok", "Offer found", "Read from a page built for humans"] },
+        { type: "mandate" },
+        { who: "biz", label: "Website", text: "Payment successful. Your e-ticket PDF will be emailed shortly.", t: 25 },
+        { who: "me", to: "you", text: "Done, after two logins and an OTP. The receipt is a PDF in your inbox that I'll have to read back into your expense tool.", t: 3, you: 2, ledger: ["warn", "Receipt", "Unsigned PDF · re-keyed into expenses"] }
+      ]; }
+    },
+    sox: {
+      label: "SOX readiness scoping", sub: "US · advisory firm", cur: "USD", locale: "en-US", frac: 0,
+      ask: "We're 18 months from an IPO. Get a SOX 404 readiness scoping call set up with an advisory firm this week. Share public information only.",
+      biz: "Uniqus (illustrative)", domain: "uniqus.example",
+      caps: "scope.request, partner.availability, insight.read", amount: 0, cap: 0, askAbove: 0, max: 0, step: 1,
+      rule: "Booking a partner's time and sharing your scoping answers is a commitment, so I'll ask first.",
+      greet: "Verified agent acting for a CFO. Mandate noted: public information only, no NDA. Happy to help scope.",
+      intent: "scope.request service=sox404.readiness ipo_horizon=18m entities=6 erp=NetSuite",
+      intentText: "SOX 404 readiness for an IPO in about 18 months. Six entities, NetSuite.",
+      offer: "Here's a 12-question scoping pack, 8 pre-answered from what you shared. Partner slots: Tuesday 10:00 ET or Wednesday 14:00 ET. Fees are discussed with a partner, and the engagement letter is signed human to human.",
+      offerLedger: "Scoping pack 8/12 · two partner slots · contract reserved for humans",
+      approveText: "Book Tuesday 10:00 ET with a partner and share your 8 public-information answers?",
+      commitEnv: "scope.confirm slot=Tue 10:00 ET share=scoping-pack:public",
+      commit: "Booked for Tuesday 10:00 ET. A partner will send the invite personally.",
+      receipt: "rcpt_UQ-SCOPE-118 · calendar hold · no fee commitment",
+      legacy: function () { return [
+        { who: "me", text: "No agent channel on the firm's site in this version of the world. I'll use the contact form.", t: 2 },
+        { who: "sys", text: "Contact form submitted · 9 fields, 1 dropdown missing \"IPO readiness\"", t: 95 },
+        { who: "biz", label: "Auto-reply", text: "Thank you for reaching out. A member of our team will get back to you within 2 business days.", t: 4 },
+        { who: "sys", text: "Waiting on a human inbox", t: 2 * 86400 + 11400, ledger: ["warn", "Status", "Pending · no structured scope captured"] },
+        { who: "me", to: "you", text: "Still waiting after two business days. Want me to ask you for a warm introduction instead?", t: 2, you: 3, ledger: ["bad", "Outcome", "No meeting · no receipt"] }
+      ]; }
+    },
+    bank: {
+      label: "Card dispute, US", sub: "US · bank", cur: "USD", locale: "en-US", frac: 2,
+      ask: "My card was charged twice by a hotel on 26 September, $212.40 each time. Get the duplicate reversed.",
+      biz: "Harbor Bank", domain: "harborbank.example",
+      caps: "dispute.file, transaction.read", amount: 0, cap: 0, askAbove: 0, max: 0, step: 1,
+      rule: "The bank requires the cardholder to confirm identity personally. That step always stays with you.",
+      approveLabel: "Confirm with Face ID",
+      greet: "Agent verified. Disputes can be filed by agents, but identity step-up stays with the cardholder.",
+      intent: "dispute.file card=••4417 merchant=\"Harbourview Hotel\" date=2026-09-26 amount=212.40 reason=duplicate",
+      intentText: "Duplicate charge, Harbourview Hotel, 26 Sep, $212.40, card ending 4417.",
+      offer: "Two identical authorisations found 41 seconds apart. Duplicate confirmed. We can issue a provisional credit of $212.40 today.",
+      offerLedger: "Duplicate confirmed from the bank's own records",
+      approveText: "Allow your concierge to file one dispute on card ending 4417?",
+      commitEnv: "dispute.confirm case=HB-20931 credit=212.40USD",
+      commit: "Provisional credit of $212.40 posted. Case HB-20931 is open with the merchant.",
+      receipt: "rcpt_HB-20931 · credit $212.40 · case reference",
+      legacy: function () { return [
+        { who: "me", text: "Harbor Bank has no agent channel. Calling card services.", t: 2 },
+        { who: "biz", label: "Phone menu", text: "Welcome to Harbor Bank. Please say or enter your full card number, followed by your date of birth.", t: 22 },
+        { who: "me", text: "I won't read your full card number and date of birth into an unverified voice line. That's outside my mandate.", t: 2, ledger: ["ok", "Mandate held", "Refused to disclose identity data over voice"] },
+        { who: "me", to: "you", text: "You'll need to call yourself. The current hold estimate is 22 minutes. What to read out: Harbourview Hotel, 26 September, $212.40, charged twice.", t: 3, you: 25, ledger: ["bad", "Outcome", "Handed back to you · no case number yet"] }
+      ]; }
+    }
+  };
+  var ORDER = ["dinner", "flight", "sox", "bank"];
+  var state = { id: "dinner", gw: true };
+
+  function money(e, n) {
+    try { return new Intl.NumberFormat(e.locale, { style: "currency", currency: e.cur, maximumFractionDigits: e.frac, minimumFractionDigits: e.frac }).format(n); }
+    catch (x) { return e.cur + " " + n; }
+  }
+
+  var errandsEl = $("errands");
+  ORDER.forEach(function (id) {
+    var e = ERRANDS[id], b = document.createElement("button");
+    b.type = "button"; b.className = "errand"; b.dataset.id = id;
+    b.innerHTML = "<b>" + esc(e.label) + "</b><span>" + esc(e.sub) + "</span>";
+    b.addEventListener("click", function () { selectErrand(id); run(false); });
+    errandsEl.appendChild(b);
+  });
+
+  var cap = $("cap"), ask = $("ask");
+  function syncMandate() {
+    var e = ERRANDS[state.id], money0 = e.max > 0;
+    cap.disabled = ask.disabled = !money0;
+    if (money0) {
+      if (+ask.value > +cap.value) ask.value = cap.value;
+      $("capOut").textContent = money(e, +cap.value);
+      $("askOut").textContent = money(e, +ask.value);
+      $("mandateHint").textContent = "This errand's quote will be " + money(e, e.amount) + ". Over the cap, nothing is committed. Over the ask line, I'll check with you.";
+    } else {
+      $("capOut").textContent = "n/a"; $("askOut").textContent = "n/a";
+      $("mandateHint").textContent = e.rule;
+    }
+  }
+  function selectErrand(id) {
+    state.id = id;
+    var e = ERRANDS[id];
+    Array.prototype.forEach.call(errandsEl.children, function (b) { b.setAttribute("aria-pressed", String(b.dataset.id === id)); });
+    [cap, ask].forEach(function (r) { r.min = 0; r.max = e.max || 1; r.step = e.step; });
+    cap.value = e.cap; ask.value = e.askAbove;
+    syncMandate();
+  }
+  cap.addEventListener("input", syncMandate);
+  ask.addEventListener("input", syncMandate);
+  $("gw").addEventListener("change", function () {
+    state.gw = this.checked;
+    $("gwHint").textContent = state.gw ? "It publishes what it can do, verifies agents, and answers in structured terms." : "Phone menus, hold music, CAPTCHAs and forms built for humans.";
+    run(false);
+  });
+  $("run").addEventListener("click", function () { run(false); });
+
+  /* ---------- Runner ---------- */
+  var chat = $("chat"), ledger = $("ledger"), runId = 0, M;
+  function clockStr(s) {
+    if (s < 60) return s + "s";
+    if (s < 3600) return Math.floor(s / 60) + "m " + String(s % 60).padStart(2, "0") + "s";
+    if (s < 86400) return Math.floor(s / 3600) + "h " + String(Math.floor(s % 3600 / 60)).padStart(2, "0") + "m";
+    return Math.floor(s / 86400) + "d " + Math.floor(s % 86400 / 3600) + "h";
+  }
+  function paintMetrics() {
+    $("mClock").textContent = clockStr(M.clock);
+    $("mYou").textContent = M.you + " min";
+    $("mHang").textContent = M.hang;
+    $("mRcpt").textContent = M.rcpt;
+  }
+  function addLedger(kind, title, detail) {
+    var r = document.createElement("div");
+    r.className = "lrow " + kind;
+    r.innerHTML = "<i></i><div><span class=\"ts\">T+" + clockStr(M.clock) + "</span><b>" + esc(title) + "</b><small>" + esc(detail) + "</small></div>";
+    ledger.appendChild(r);
+    ledger.scrollTop = ledger.scrollHeight;
+  }
+  function addMsg(s) {
+    var e = ERRANDS[state.id], el = document.createElement("div");
+    if (s.who === "sys") {
+      el.className = "sysline";
+      el.innerHTML = (s.text ? "<span>" + esc(s.text) + "</span>" : "") + (s.env ? "<span class=\"env\">" + esc(s.env) + "</span>" : "");
+    } else {
+      var label = s.who === "you" ? "You" : s.who === "me" ? (s.to === "you" ? "Your concierge → you" : "Your concierge") : (s.label ? e.biz.split(",")[0] + " · " + s.label : e.biz);
+      el.className = "msg " + s.who;
+      el.innerHTML = "<span class=\"who\">" + esc(label) + "</span><div class=\"bub\">" + esc(s.text || "") + (s.env ? "<div class=\"env\">" + esc(s.env) + "</div>" : "") + "</div>";
+    }
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function gatewaySteps(e) {
+    return [
+      { who: "me", text: "On it. Checking whether " + e.biz + " takes agent requests.", t: 1 },
+      { who: "sys", text: e.biz + " publishes an agent card: " + e.caps + ".", env: "GET https://" + e.domain + "/.well-known/agent-card.json → 200", t: 1, ledger: ["ok", "Counterparty discovered", e.biz + " · agent gateway"] },
+      { who: "sys", env: "HELLO agent://concierge.sandip  sig=web-bot-auth  principal=pact:verified", t: 1 },
+      { who: "biz", label: "Agent", text: e.greet, t: 1, ledger: ["ok", "Know Your Agent", "Signed agent key + vouched human principal"] },
+      { who: "me", text: e.intentText, env: "INTENT " + e.intent, t: 2 },
+      { who: "biz", label: "Agent", text: e.offer, t: 2, ledger: ["ok", "Structured offer", e.offerLedger] },
+      { type: "mandate" },
+      { who: "sys", env: "COMMIT " + e.commitEnv, t: 1 },
+      { who: "biz", label: "Agent", text: e.commit, t: 1, rcpt: true, ledger: ["ok", "Signed receipt", e.receipt] },
+      { type: "done" }
+    ];
+  }
+
+  function askHuman(text, yesLabel, my, instant) {
+    if (instant) return Promise.resolve(true);
+    return new Promise(function (resolve) {
+      var box = document.createElement("div");
+      box.className = "approve";
+      box.innerHTML = "<p>" + esc(text) + "</p><div class=\"row\"><button type=\"button\" class=\"yes\">" + esc(yesLabel) + "</button><button type=\"button\" class=\"no\">Decline</button></div>";
+      chat.appendChild(box);
+      chat.scrollTop = chat.scrollHeight;
+      function done(v) { if (my !== runId) return; box.classList.add("done"); box.querySelectorAll("button").forEach(function (b) { b.disabled = true; }); resolve(v); }
+      box.querySelector(".yes").addEventListener("click", function () { done(true); });
+      box.querySelector(".no").addEventListener("click", function () { done(false); });
+    });
+  }
+
+  async function mandate(e, my, instant) {
+    var c = +cap.value, a = +ask.value, hasMoney = e.max > 0;
+    if (hasMoney && e.amount > c) {
+      addMsg({ who: "sys", env: "DECLINE reason=mandate.cap" });
+      addMsg({ who: "me", to: "you", text: "The offer is " + money(e, e.amount) + " and your cap is " + money(e, c) + ", so I didn't commit. Raise the cap and run it again if you want it." });
+      addLedger("bad", "Mandate check", "Over cap (" + money(e, e.amount) + " > " + money(e, c) + "). Nothing committed.");
+      return false;
+    }
+    var reason = !hasMoney ? e.rule : (e.amount > a ? money(e, e.amount) + " is above your ask-me line of " + money(e, a) + "." : null);
+    if (reason) {
+      addMsg({ who: "me", to: "you", text: "I need your OK. " + reason });
+      addLedger("warn", "Approval requested", hasMoney ? "Amount above threshold" : "Rule: human step required");
+      var ok = await askHuman(e.approveText || e.offerLedger, e.approveLabel || "Approve", my, instant);
+      if (my !== runId) return false;
+      M.clock += 20; M.you += 1;
+      if (!ok) {
+        addMsg({ who: "you", text: "Declined." });
+        addMsg({ who: "me", text: "Understood. I released the hold. Nothing was committed." });
+        addLedger("bad", "Declined by you", "No commitment made");
+        return false;
+      }
+      addMsg({ who: "you", text: e.approveLabel ? "Confirmed." : "Approved." });
+      addLedger("ok", "Approved by you", "Human-in-the-loop evidence captured");
+      return true;
+    }
+    addMsg({ who: "sys", text: "Within mandate · auto-approved" });
+    addLedger("ok", "Mandate check", money(e, e.amount) + " ≤ ask-me line " + money(e, a) + " · auto-approved");
+    return true;
+  }
+
+  async function run(instant) {
+    var my = ++runId, e = ERRANDS[state.id];
+    var pace = instant ? 0 : (reduce ? 120 : 650);
+    chat.innerHTML = ""; ledger.innerHTML = "";
+    M = { clock: 0, you: 0, hang: 0, rcpt: 0 };
+    paintMetrics();
+    var chip = $("modeChip");
+    chip.textContent = state.gw ? "Agent gateway" : "No gateway";
+    chip.className = "chip " + (state.gw ? "on" : "off");
+    addLedger("ok", "Mandate loaded", e.max > 0 ? "Cap " + money(e, +cap.value) + " · ask above " + money(e, +ask.value) + " · expires in 24h" : "Scope: this errand only · expires in 24h");
+    addMsg({ who: "you", text: e.ask });
+    var steps = state.gw ? gatewaySteps(e) : e.legacy();
+    for (var i = 0; i < steps.length; i++) {
+      var s = steps[i];
+      if (my !== runId) return;
+      if (s.type === "mandate") {
+        var go = await mandate(e, my, instant);
+        paintMetrics();
+        if (!go) {
+          if (!state.gw) addLedger("bad", "Outcome", "Not changed");
+          return;
+        }
+        continue;
+      }
+      if (s.type === "done") {
+        addMsg({ who: "me", to: "you", text: "Done in " + clockStr(M.clock) + ". The signed receipt is filed with your expenses, and the activity log is in your ledger." });
+        addLedger("ok", "Outcome", "Completed · reconciles to receipt");
+        paintMetrics();
+        return;
+      }
+      if (!instant && s.who !== "sys" && s.who !== "you") {
+        var typing = document.createElement("div");
+        typing.className = "typing";
+        typing.textContent = (s.who === "me" ? "Your concierge" : e.biz) + " is typing…";
+        chat.appendChild(typing); chat.scrollTop = chat.scrollHeight;
+        await wait(pace * 0.6);
+        typing.remove();
+        if (my !== runId) return;
+      } else { await wait(pace * 0.4); if (my !== runId) return; }
+      M.clock += s.t || 0;
+      M.you += s.you || 0;
+      if (s.hang) M.hang += 1;
+      if (s.rcpt) M.rcpt += 1;
+      addMsg(s);
+      if (s.ledger) addLedger(s.ledger[0], s.ledger[1], s.ledger[2]);
+      paintMetrics();
+      if (!instant) await wait(pace * 0.4);
+    }
+  }
+
+  selectErrand("dinner");
+  run(true);
+
+  .live-cta { margin-top: 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--hero); color: #fff; border-radius: 16px; padding: 18px 20px; }
+.live-cta p { color: #D9D4E2; font-size: .95rem; max-width: 46em; }
+.live-cta b { color: #fff; font-size: 1.1rem; display: block; margin-bottom: 4px; }
+.live-cta a { background: var(--grad); color: #fff; text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 999px; white-space: nowrap; }
+
+/* ---------- Two front doors ---------- */
+  function door(agent) {
+    $("viewHuman").setAttribute("aria-pressed", String(!agent));
+    $("viewAgent").setAttribute("aria-pressed", String(agent));
+    $("humanSite").hidden = agent; $("agentSite").hidden = !agent;
+    $("doorUrl").textContent = agent ? "saffronroom.example/.well-known/agent-card.json" : "saffronroom.example";
+  }
+  $("viewHuman").addEventListener("click", function () { door(false); });
+  $("viewAgent").addEventListener("click", function () { door(true); });
+
+  /* ---------- Bets ---------- */
+  var BETS = [
+    ["2027", "\"Press 1\" gets a sibling. Business phone lines detect agent callers and hand them to a structured channel instead of hanging up."],
+    ["2027", "Every serious website ships an agent front door next to its human one, the way every brand added a WhatsApp number."],
+    ["2028", "Know Your Agent sits next to KYC. Banks and brokers ask for the agent's credential and the human's mandate before acting."],
+    ["2028", "Your default concierge becomes the new gatekeeper. Brands fight to be its first suggestion the way they fought for page one of search."],
+    ["2028", "Agent-initiated transactions become their own population in SOX walkthroughs, with the mandate as the key control."],
+    ["2029", "Talking to a human becomes a premium tier. In Meta's tests, human-placed calls succeeded 95 to 98% of the time, beating the AI."]
+  ];
+  var votes = store("musing-bets") || {};
+  var betsEl = $("bets");
+  function paintTally() {
+    var a = 0, d = 0;
+    Object.keys(votes).forEach(function (k) { if (votes[k] === "agree") a++; else if (votes[k] === "doubt") d++; });
+    $("tally").textContent = a + d === 0 ? "Vote on each bet. Your picks stay in this browser." : "You agree with " + a + " and doubt " + d + " of 6. Bring the doubts to the comments.";
+  }
+  BETS.forEach(function (b, i) {
+    var el = document.createElement("article");
+    el.className = "bet";
+    el.innerHTML = "<span class=\"yr\">By " + b[0] + "</span><p>" + esc(b[1]) + "</p><div class=\"vote\"><button type=\"button\" class=\"agree\">Agree</button><button type=\"button\" class=\"doubt\">Doubt it</button></div>";
+    var ag = el.querySelector(".agree"), dt = el.querySelector(".doubt");
+    function paint() { ag.setAttribute("aria-pressed", String(votes[i] === "agree")); dt.setAttribute("aria-pressed", String(votes[i] === "doubt")); }
+    function set(v) { votes[i] = votes[i] === v ? null : v; store("musing-bets", votes); paint(); paintTally(); }
+    ag.addEventListener("click", function () { set("agree"); });
+    dt.addEventListener("click", function () { set("doubt"); });
+    paint();
+    betsEl.appendChild(el);
+  });
+  paintTally();
+
+  /* ---------- Readiness ---------- */
+  var QS = [
+    ["An agent can find what you sell, and your prices, in a machine-readable form.", false],
+    ["An agent can book or buy without solving a CAPTCHA or calling a human.", false],
+    ["Your phone line can tell an agent caller from a human and route it, instead of hanging up.", false],
+    ["You can verify which agent is acting and whose authority it carries.", false],
+    ["Agent-made orders land in your ERP with an audit trail and a receipt.", true],
+    ["Your user access review covers non-human identities: bots, service accounts, agents.", true]
+  ];
+  var TIERS = [
+    [0, "Hangs up on agents", "Customers' concierges will route around you. Start with a machine-readable catalogue and a policy for agent callers."],
+    [2, "Agent-curious", "The back office is ahead of the front door. Publish an agent card and stop blocking verified agents."],
+    [4, "Agent-ready", "You can take an agent's order and prove what it agreed to. Next, decide what you keep for humans."],
+    [6, "Concierge-native", "Agents can find you, verify themselves, transact and leave evidence. Make sure your auditors know how it works."]
+  ];
+  var qsEl = $("qs");
+  QS.forEach(function (q, i) {
+    var row = document.createElement("label");
+    row.className = "q switch"; row.setAttribute("for", "q" + i);
+    row.innerHTML = "<span>" + esc(q[0]) + "</span><input type=\"checkbox\" id=\"q" + i + "\"" + (q[1] ? " checked" : "") + ">";
+    row.querySelector("input").addEventListener("change", paintScore);
+    qsEl.appendChild(row);
+  });
+  function paintScore() {
+    var n = 0;
+    QS.forEach(function (_, i) { if ($("q" + i).checked) n++; });
+    var t = TIERS[0];
+    TIERS.forEach(function (x) { if (n >= x[0]) t = x; });
+    $("scoreNum").innerHTML = n + "<small>/6</small>";
+    $("meter").style.width = (n / 6 * 100) + "%";
+    $("tier").textContent = t[1];
+    $("tierText").textContent = t[2];
+  }
+  paintScore();
+
+  /* ---------- LinkedIn post ---------- */
+  var POST = [
+    "Who picks up when your agent calls?",
+    "",
+    "A Meta employee asked Muse to call his insurer. The insurer kept hanging up the moment it heard an AI. Meta's fix, quietly tested and then rolled back: hand some calls to human contractors.",
+    "",
+    "The agents are ready. The front doors aren't.",
+    "",
+    "In eight weeks we got Meta's Muse, OpenAI's dots, Instinct and Grok Bot. Each wants to be your personal concierge. Soon your customer won't visit your website or wait on hold. Their agent will, and it won't solve your CAPTCHA.",
+    "",
+    "WhatsApp made every business a chat. Agents will make every business an endpoint.",
+    "",
+    "So businesses need an agent gateway: a site that tells machines what it can do, a phone line that recognises an agent caller, a way to verify which agent is calling and whose mandate it carries, and a receipt both sides trust.",
+    "",
+    "Wearing my controls hat, every agent errand is a delegated transaction:",
+    "→ Authorization: a signed mandate with limits and expiry",
+    "→ Identity: Know Your Agent, next to KYC",
+    "→ Accuracy: structured terms, not a paraphrased call",
+    "→ Completeness: every action logged, failures included",
+    "→ Segregation: the agent that requests shouldn't approve",
+    "",
+    "And your next user access review will have new names in it. They work weekends.",
+    "",
+    "For this Friday Musing I built two things you can play with:",
+    "1. A simulator: send a concierge to book dinner in Dubai, change a flight in India or dispute a charge with a US bank, with and without a gateway.",
+    "2. A live concierge (Claude Sonnet 5.5). Type your real errands, in Hinglish if you like. It books with demo businesses that answer agents, builds your calendar, drafts your WhatsApps, and asks before it spends. No Muse or dots account needed, and it works from India.",
+    "",
+    "Read and play: https://friday-musings.vercel.app/2026-10-03-who-picks-up/",
+    "",
+    "Six bets inside. Tell me which one I've got wrong.",
+    "",
+    "#FridayMusings #AgenticAI #InternalControls #SOX #FutureOfWork"
+  ].join("\n");
+  var ta = $("postText");
+  ta.value = store("musing-post") || POST;
+  ta.addEventListener("input", function () { store("musing-post", ta.value); });
+  $("copyPost").addEventListener("click", function () {
+    var msg = $("copyMsg");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it into LinkedIn."; }, function () { ta.select(); msg.textContent = "Text selected. Press Ctrl+C or ⌘C to copy."; });
+    } else { ta.select(); msg.textContent = "Text selected. Press Ctrl+C or ⌘C to copy."; }
+  });
+})();
+</script>
+</body>
+</html>

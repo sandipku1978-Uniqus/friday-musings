@@ -1,0 +1,14 @@
+{
+  "name": "friday-musings",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "MOCK_MODEL=1 node dev-server.js",
+    "dev:live": "node --env-file=.env.local dev-server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
+  }
+}

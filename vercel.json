@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "api/concierge.js": { "maxDuration": 300 }
+  },
+  "rewrites": [
+    { "source": "/.well-known/agent-card.json", "destination": "/api/agent-card" },
+    { "source": "/gateway/:biz/agent-card.json", "destination": "/api/agent-card?biz=:biz" },
+    { "source": "/gateway/:biz", "destination": "/api/gateway?biz=:biz" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
+}
