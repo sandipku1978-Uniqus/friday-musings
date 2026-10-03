@@ -113,7 +113,7 @@ section.block { padding-block: 64px; }
 .lede { max-width: 44em; margin-top: 14px; font-size: 1.06rem; }
 .section-head { display: grid; gap: 4px; }
 
-.race { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+.race { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 14px; margin-top: 28px; }
 .race article { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 8px; align-content: start; }
 .race .who { font-size: 0.74rem; color: var(--meta); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
 .race h3 { color: var(--purple); font-size: 1.25rem; }
@@ -267,12 +267,11 @@ footer a { color: #E46BB0; }
 @media (max-width: 1040px) {
   .sim { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .sim .chat-panel { grid-column: 1 / -1; order: -1; }
-  .race { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
   .hero-grid, .doors, .ready, .sim { grid-template-columns: minmax(0, 1fr); }
-  .race, .bets { grid-template-columns: minmax(0, 1fr); }
+  .bets { grid-template-columns: minmax(0, 1fr); }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .chat { height: 420px; }
   .score { position: static; }
@@ -296,7 +295,7 @@ footer a { color: #E46BB0; }
       <div>
         <p class="eyebrow" style="color:#E46BB0">The concierge economy</p>
         <h1 style="margin-top:12px">Who picks up when <em>your agent</em> calls?</h1>
-        <p class="dek">WhatsApp turned every business into a chat window. Personal agents like Muse, dots and Instinct will turn every business into an endpoint. That changes how we buy, and it changes what a control looks like.</p>
+        <p class="dek">WhatsApp turned every business into a chat window. Personal agents like Muse, dots, Instinct and Fo will turn every business into an endpoint. That changes how we buy, and it changes what a control looks like.</p>
         <p class="byline"><b>Sandip Khetan</b> · Co-Founder, Uniqus Consultech · 7 min read · <a href="/concierge/" style="color:#E46BB0">or give a live concierge your chores</a></p>
       </div>
       <div class="call" id="call">
@@ -327,7 +326,7 @@ footer a { color: #E46BB0; }
     <div class="wrap">
       <div class="section-head">
         <p class="eyebrow">September 2026</p>
-        <h2>Four concierges in eight weeks</h2>
+        <h2>Five concierges in eight weeks</h2>
       </div>
       <p class="lede">The personal assistant we were promised for fifteen years arrived all at once. Each one has its own cloud computer, remembers your life, and wants to run errands for you. The race is to become your default.</p>
       <div class="race">
@@ -343,8 +342,13 @@ footer a { color: #E46BB0; }
         </article>
         <article>
           <span class="who">Startup</span><h3>Instinct</h3><span class="when">Invite only</span>
-          <p>No app to learn. You text or call it, and it texts or calls you first. It reads email, messages, screen, audio and location, and now has its own email addresses and phone calls. Reported in talks at a $10B valuation.</p>
+          <p>No app to learn. You text or call it, and it texts or calls you first. It reads email, messages, screen, audio and location, and now has its own email addresses and phone calls. Reportedly valued at $10B.</p>
           <a href="https://www.axios.com/2026/09/20/ai-assistant-openai-meta-muse-instinct-grok-apple" target="_blank" rel="noopener">Axios, 20 Sep</a>
+        </article>
+        <article>
+          <span class="who">Wajo</span><h3>Fo</h3><span class="when">Public since 28 Sep</span>
+          <p>Its own phone number, inbox, voice and a single-use card for every purchase. Calls businesses in their language, and hands tasks AI can't finish to trained human assistants. Free tier.</p>
+          <a href="https://wajo.ai/" target="_blank" rel="noopener">Wajo</a>
         </article>
         <article>
           <span class="who">SpaceXAI</span><h3>Grok Bot</h3><span class="when">Beta since Aug</span>
@@ -486,6 +490,10 @@ footer a { color: #E46BB0; }
         <b>Your next user access review will have new names in it</b>
         <p>OpenAI is previewing specialist dots with "their own identity for access management", plus credentials into a company's systems of record. Those are users. They need provisioning, periodic access review, and termination like everyone else, and they work weekends. COSO Principle 11 (general controls over technology) just gained a new population.</p>
       </div>
+      <div class="callout">
+        <b>Read the terms: the liability stays with you</b>
+        <p>Wajo's terms for Fo, as reported at launch, make the user responsible for the agent's actions "as if you had taken those actions yourself". And if you don't configure spending controls, Wajo "may act on any instructions it reasonably determines were provided by you within the scope of your general authorization". In control terms, the user is the control owner, and the mandate is the only control they hold. Set it before you connect a card.</p>
+      </div>
     </div>
   </section>
 
@@ -534,6 +542,7 @@ footer a { color: #E46BB0; }
         <blockquote>WhatsApp made every business a chat. Agents will make every business an endpoint.</blockquote>
         <p>So someone has to build the agent gateway: a website that publishes what it can do for machines, a phone line that recognises an agent caller and switches to a structured channel, a way to check which agent is calling and whose authority it carries, and a receipt both sides can rely on. The pieces are appearing (agent cards, Web Bot Auth, PACT, x402). The plumbing is the easy part.</p>
         <p>The hard part is the one I've spent my career on. Every agent errand is a delegated transaction. Delegation needs authorization, limits, segregation and evidence. If your dot approved a purchase order at 2am, who owned that control? Who reviewed its access last quarter? Where is the receipt?</p>
+        <p>Read the terms and the answer is already there. Wajo's Fo, one of the most careful of the new agents (single-use cards, its own inbox, humans for the hard bits), still makes you responsible "as if you had taken those actions yourself". The agent acts; you own the control. Most people will connect a card long before they write a mandate.</p>
         <p>In the WhatsApp era the question was "are you on WhatsApp?" In the agent era it will be "can my agent talk to yours?" For those of us in controls, there's a follow-up: "can you prove what it agreed to?"</p>
         <p>Have a great weekend. If your concierge is reading this for you, say hello.</p>
       </div>
@@ -555,6 +564,7 @@ footer a { color: #E46BB0; }
           <li><a href="https://www.reuters.com/business/meta-testing-human-concierge-its-new-personal-ai-agent-muse-2026-09-22/" target="_blank" rel="noopener">Reuters, Meta testing a "human concierge" for Muse</a> (22 Sep 2026)</li>
           <li><a href="https://openai.com/index/introducing-dots/" target="_blank" rel="noopener">OpenAI, Introducing dots</a> (29 Sep 2026)</li>
           <li><a href="https://www.axios.com/2026/09/20/ai-assistant-openai-meta-muse-instinct-grok-apple" target="_blank" rel="noopener">Axios, The tech battle to build your AI assistant</a> (20 Sep 2026)</li>
+          <li><a href="https://wajo.ai/" target="_blank" rel="noopener">Wajo, Fo</a> and <a href="https://www.progressiverobot.com/2026/09/29/wajo-launches-fo-ai-agent-calls-payments/" target="_blank" rel="noopener">launch coverage quoting its terms of service</a> (29 Sep 2026)</li>
           <li><a href="https://blog.cloudflare.com/the-agentic-internet/" target="_blank" rel="noopener">Cloudflare, Building an open Agentic Internet</a> (6 Aug 2026)</li>
         </ol>
       </div>
@@ -887,12 +897,7 @@ footer a { color: #E46BB0; }
   selectErrand("dinner");
   run(true);
 
-  .live-cta { margin-top: 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: var(--hero); color: #fff; border-radius: 16px; padding: 18px 20px; }
-.live-cta p { color: #D9D4E2; font-size: .95rem; max-width: 46em; }
-.live-cta b { color: #fff; font-size: 1.1rem; display: block; margin-bottom: 4px; }
-.live-cta a { background: var(--grad); color: #fff; text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 999px; white-space: nowrap; }
-
-/* ---------- Two front doors ---------- */
+  /* ---------- Two front doors ---------- */
   function door(agent) {
     $("viewHuman").setAttribute("aria-pressed", String(!agent));
     $("viewAgent").setAttribute("aria-pressed", String(agent));
@@ -909,7 +914,7 @@ footer a { color: #E46BB0; }
     ["2028", "Know Your Agent sits next to KYC. Banks and brokers ask for the agent's credential and the human's mandate before acting."],
     ["2028", "Your default concierge becomes the new gatekeeper. Brands fight to be its first suggestion the way they fought for page one of search."],
     ["2028", "Agent-initiated transactions become their own population in SOX walkthroughs, with the mandate as the key control."],
-    ["2029", "Talking to a human becomes a premium tier. In Meta's tests, human-placed calls succeeded 95 to 98% of the time, beating the AI."]
+    ["2029", "Talking to a human becomes a premium tier. In Meta's tests human-placed calls succeeded 95 to 98% of the time, and Wajo's Fo already hands hard tasks to trained humans."]
   ];
   var votes = store("musing-bets") || {};
   var betsEl = $("bets");
@@ -975,7 +980,7 @@ footer a { color: #E46BB0; }
     "",
     "The agents are ready. The front doors aren't.",
     "",
-    "In eight weeks we got Meta's Muse, OpenAI's dots, Instinct and Grok Bot. Each wants to be your personal concierge. Soon your customer won't visit your website or wait on hold. Their agent will, and it won't solve your CAPTCHA.",
+    "In eight weeks we got Meta's Muse, OpenAI's dots, Instinct, Wajo's Fo and Grok Bot. Each wants to be your personal concierge. Soon your customer won't visit your website or wait on hold. Their agent will, and it won't solve your CAPTCHA.",
     "",
     "WhatsApp made every business a chat. Agents will make every business an endpoint.",
     "",
