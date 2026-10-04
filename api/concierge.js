@@ -36,7 +36,7 @@ function brief(state, text) {
   return [
     `Today is ${weekday}, ${state.today}, ${time} local time in ${city.label} (time zone ${city.tz}). Currency: ${state.currency}.`,
     `Visitor's first name: ${state.firstName || "not given; sign drafts without a name"}.`,
-    `Mandate: spending cap ${m(state.mandate.cap)} per errand. Commit without asking up to ${m(state.mandate.askAbove)}; above that the visitor approves. Irreversible actions, such as cancellations, always need approval.`,
+    `Mandate: spending cap ${m(state.mandate.cap)} per errand. Commit without asking below ${m(state.mandate.askAbove)}; at ${m(state.mandate.askAbove)} or more the visitor approves. Anything other than what they asked for (another day, time or part of the day) and irreversible actions, such as cancellations, always need approval. All amounts are in ${state.currency}.`,
     "Errands, exactly as the visitor typed them:",
     "<errands>", text, "</errands>",
   ].join("\n");
@@ -58,7 +58,7 @@ function newState(body, origin) {
     v: 1, created: Date.now(), origin, city: cityKey, currency: city.currency, today: todayIn(city.tz),
     firstName, mandate: { cap, askAbove }, messages: [], turns: 0, nudged: false, done: false,
     usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, costUsd: 0 },
-    errands: [], offers: {}, approvals: {}, receiptCount: 0, pending: null,
+    errands: [], offers: {}, approvals: {}, asked: {}, receiptCount: 0, pending: null,
   };
   state.messages.push({ role: "user", content: brief(state, text) });
   return { state };
@@ -108,13 +108,13 @@ export default async function handler(req, res) {
     } else {
       const m = (n) => money(state.currency, n);
       emit({ t: "run", model: MODEL, city: CITIES[state.city].label, currency: state.currency });
-      emit({ t: "ledger", kind: "ok", title: "Mandate loaded", detail: `Cap ${m(state.mandate.cap)} per errand · ask above ${m(state.mandate.askAbove)} · irreversible actions always ask · expires in 30 min` });
+      emit({ t: "ledger", kind: "ok", title: "Mandate loaded", detail: `Cap ${m(state.mandate.cap)} per errand · ask at ${m(state.mandate.askAbove)} or more · changes to what you asked for and irreversible actions always ask · expires in 30 min` });
     }
     const client = mock ? (await import("../lib/mock-model.js")).mockClient : undefined;
     const outcome = await runLoop(state, emit, { client, deadline: Date.now() + RUN_BUDGET_MS });
     if (outcome === "paused") {
       const p = state.pending;
-      emit({ t: "approval", ref: p.ref, offer: p.offer, question: p.question, state: seal("state", state, { gzip: true }) });
+      emit({ t: "approval", ref: p.ref, offer: p.offer, question: p.question, why: p.why, state: seal("state", state, { gzip: true }) });
     } else if (outcome === "continue") {
       emit({ t: "continue", state: seal("state", state, { gzip: true }) });
     }

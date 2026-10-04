@@ -194,10 +194,10 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
       <label for="cap">Spend up to
         <input id="cap" type="number" inputmode="numeric" min="0" step="100">
       </label>
-      <label for="askAbove">Ask me above
+      <label for="askAbove">Ask me at or above
         <input id="askAbove" type="number" inputmode="numeric" min="0" step="100">
       </label>
-      <p class="full fine" style="text-align:left">Cancellations always come back to you. These limits are enforced by the server, not by the AI.</p>
+      <p class="full fine" style="text-align:left">Cancellations, and anything other than the day or time you asked for, always come back to you. These limits are enforced by the server, not by the AI.</p>
     </div>
     <button class="go" id="go" type="button">Do it</button>
     <p class="fine">A demo built to make the argument tangible. The businesses are fictional; the data is real: live weather, OpenStreetMap places and exchange rates. Nothing is charged. Don't type ID numbers or card details.</p>
@@ -315,7 +315,7 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
   var errands = $("errands"), city = $("city"), cap = $("cap"), askAbove = $("askAbove"), firstName = $("firstName");
   function syncLimits() {
     var cur = CUR[city.value];
-    $("limitsText").innerHTML = esc(LABEL[city.value]) + " · spend up to " + esc(money(cur, +cap.value || 0)) + "<br>I'll ask before anything over " + esc(money(cur, +askAbove.value || 0));
+    $("limitsText").innerHTML = esc(LABEL[city.value]) + " · spend up to " + esc(money(cur, +cap.value || 0)) + "<br>I'll ask before anything " + esc(money(cur, +askAbove.value || 0)) + " or more";
   }
   function resetAmounts() { var d = DEFAULTS[CUR[city.value]]; cap.value = d[0]; askAbove.value = d[1]; }
   EXAMPLES.forEach(function (ex) {
@@ -347,10 +347,10 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
   function card(ref, title) {
     if (model[ref]) { if (title) { model[ref].title = title; model[ref].el.querySelector("b").textContent = title; } return model[ref]; }
     var c = el("article", "card");
-    c.innerHTML = '<div class="head"><span class="icw"></span><b></b><span class="tag" hidden></span></div><p class="line">Next</p><p class="next" hidden></p><div class="sub"></div><div class="acts"></div>';
-    c.querySelector("b").textContent = title || ref;
+    c.innerHTML = '<div class="head"><span class="icw"></span><b></b><span class="tag" hidden></span></div><p class="line">Up next</p><p class="next" hidden></p><div class="sub"></div><div class="acts"></div>';
+    c.querySelector("b").textContent = title || "Errand";
     $("cards").appendChild(c);
-    var m = { ref: ref, title: title || ref, el: c, tag: null, state: "pending", events: [], drafts: [], receipts: [], live: [] };
+    var m = { ref: ref, title: title || "Errand", el: c, tag: null, state: "pending", events: [], drafts: [], receipts: [], live: [] };
     model[ref] = m; order.push(ref);
     setState(m, "pending");
     return m;
@@ -413,6 +413,10 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
     var url = URL.createObjectURL(new Blob([ics(events)], { type: "text/calendar" }));
     var a = el("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+  }
+  function fileName(title) {
+    var slug = String(title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48).replace(/-+$/, "");
+    return (slug || "concierge-event") + ".ics";
   }
   function when(ev) {
     var d = new Date(ev.start.slice(0, 10) + "T12:00:00Z");
@@ -506,7 +510,7 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
         sub(mc).appendChild(cb);
         if (!mc.el.querySelector(".cal")) {
           var b = el("button", "btn cal", "Add to calendar"); b.type = "button";
-          b.addEventListener("click", function () { download(calendar.filter(function (x) { return x.ref === e.ref; }), "concierge-" + e.ref + ".ics"); });
+          b.addEventListener("click", function () { download(calendar.filter(function (x) { return x.ref === e.ref; }), fileName(mc.title)); });
           acts(mc).appendChild(b);
         }
         ev.ref = e.ref;
@@ -567,10 +571,12 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
     var o = e.offer;
     $("sheetTitle").textContent = e.question;
     $("sheetFacts").innerHTML = "";
-    [["Where", o.business_name + " (demo)"], [o.payment ? o.payment.charAt(0).toUpperCase() + o.payment.slice(1) : "Amount", money(o.currency, o.amount)], ["Terms", o.terms]].forEach(function (r) {
+    var d = o.differs_from_request;
+    [["Where", o.business_name + " (demo)"], d && ["You asked for", d.asked], d && ["I can get", d.offered], [o.payment ? o.payment.charAt(0).toUpperCase() + o.payment.slice(1) : "Amount", money(o.currency, o.amount)], ["Terms", o.terms]].filter(Boolean).forEach(function (r) {
       var row = el("div"); row.appendChild(el("dt", "", esc(r[0]))); row.appendChild(el("dd", "", esc(r[1]))); $("sheetFacts").appendChild(row);
     });
-    $("sheetWhy").textContent = o.requires_approval ? "Cancellations and other irreversible actions always come back to you." : "I'm asking because it's above your " + money(o.currency, asked) + " line. Under that, I'd have just done it.";
+    var why = e.why && e.why.length ? e.why : [o.requires_approval ? "it can't be undone, and that always comes back to you" : "it's at or above your " + money(o.currency, asked) + " ask-me line"];
+    $("sheetWhy").textContent = "I'm asking because " + why.join(", and ") + "." + (o.requires_approval ? "" : " Otherwise I'd have just done it.");
     $("sheet").hidden = false;
     touch(e.ref, "Waiting for your OK");
     $("yes").focus();
