@@ -13,6 +13,17 @@ Interactive essays by Sandip Khetan, Co-Founder, Uniqus Consultech.
 - **`concierge/`**: a live AI concierge (Claude Sonnet 5.5). Visitors type everyday errands. It books with demo businesses that run agent gateways, creates calendar entries and drafts messages, all inside a mandate the visitor sets.
 - **`/gateway/*` and `/.well-known/agent-card.json`**: five fictional businesses (restaurant, clinic, home services, insurer, gym) that answer AI agents. Any agent can call them, and receipts are Ed25519-signed.
 
+### Live data (real, no booking)
+
+| Source | Used for | Key |
+|---|---|---|
+| [Open-Meteo](https://open-meteo.com) | Weather forecast, up to 16 days | none |
+| [OpenStreetMap Nominatim](https://nominatim.org) | Real places nearby with phone, website, hours (≤1 req/s, cached, identified User-Agent) | none |
+| [ExchangeRate-API open access](https://www.exchangerate-api.com) | Exchange rates, daily | none |
+| [AeroDataBox](https://aerodatabox.com) via RapidAPI | Flight status by flight number | `AERODATABOX_KEY` (free Basic plan); capped by `FLIGHT_LOOKUPS_PER_DAY` |
+
+Locked on purpose, and shown as such in the UI: Indian Railways (Pravah/CRIS is partner-only), NSE live data (paid feed), airline booking (Amadeus self-service closed 17 Jul 2026), bank/UPI payments.
+
 ### How the concierge works
 
 ```
@@ -41,7 +52,7 @@ browser ──POST /api/concierge──▶ agent loop (lib/agent.js) ──▶ C
 3. **Deploy.** If the project name isn't `friday-musings`, update the `https://friday-musings.vercel.app/...` URLs in the `og:` meta tags and in the LinkedIn post text inside the musing.
 4. **Check:** open `/concierge/`, run the Mumbai example, approve, then press "Verify signature" on a receipt.
 
-Optional tuning (see `.env.example`): `RUNS_PER_HOUR` (default 6 per visitor), `DAILY_RUN_CAP` (default 200), `CONCIERGE_EFFORT` (default `medium`), `CONCIERGE_FALLBACKS` (`off` disables server-side refusal fallback).
+Optional: set `AERODATABOX_KEY` to switch on live flight status (see below). Optional tuning (see `.env.example`): `RUNS_PER_HOUR` (default 6 per visitor), `DAILY_RUN_CAP` (default 200), `CONCIERGE_EFFORT` (default `medium`), `CONCIERGE_FALLBACKS` (`off` disables server-side refusal fallback).
 
 **What it costs:** a typical run is 6 to 9 model turns, about $0.05 to $0.15 at Sonnet 5.5 prices ($2 / $10 per million input / output tokens) with caching. At the default daily cap of 200 runs, expect up to roughly $30 a day.
 
@@ -59,3 +70,10 @@ npm test           # gateway, signing, mandate enforcement, full approve/decline
 Create `YYYY-MM-DD-slug/index.html` (self-contained, assets alongside), add a card to the root `index.html` and a row to the table above, and set the `og:*` tags so LinkedIn shows a preview card.
 
 Personal views, not advice. The businesses in the demo are fictional; nothing booked through them is real.
+
+## Switching on live flight status
+
+1. Sign in at rapidapi.com, open the **AeroDataBox** API, and subscribe to the free **Basic** plan.
+2. Copy your `X-RapidAPI-Key` from the API's Endpoints tab.
+3. In Vercel → Settings → Environment Variables, add `AERODATABOX_KEY` with that value, then redeploy.
+4. The "Flight status" row on `/concierge/` changes from "needs a key" to "AeroDataBox". Try: "Is EK 501 on time tomorrow?"

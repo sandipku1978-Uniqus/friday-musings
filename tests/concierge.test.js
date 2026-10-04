@@ -5,6 +5,7 @@ import { seal, unseal, verifyReceipt } from "../lib/sign.js";
 import { execute } from "../lib/tools.js";
 import { runLoop, applyDecision } from "../lib/agent.js";
 import { mockClient } from "../lib/mock-model.js";
+import { weather, fx, flight, places } from "../lib/live.js";
 
 const today = todayIn("Asia/Kolkata");
 const plus = (d) => new Date(Date.parse(today + "T00:00:00Z") + d * 86400000).toISOString().slice(0, 10);
@@ -52,21 +53,21 @@ test("gateway rejects past dates and unknown intents", () => {
   assert.ok(agentCard("citycare-clinic", "https://x").receipts.public_jwk.x);
 });
 
-test("mandate: over-cap and unapproved commits are refused in code", () => {
+test("mandate: over-cap and unapproved commits are refused in code", async () => {
   const state = freshState({ cap: 1500, askAbove: 500 });
   const emit = () => {};
-  const search = JSON.parse(execute("call_gateway", { errand_ref: "E1", business_id: "saffron-room", intent: "availability.search", params: { date: plus(2), time: "19:30", party_size: 4 } }, state, emit).content);
-  const held = JSON.parse(execute("call_gateway", { errand_ref: "E1", business_id: "saffron-room", intent: "table.hold", params: { slot_id: search.slots[0].slot_id, party_size: 4 } }, state, emit).content);
-  const over = execute("commit_offer", { errand_ref: "E1", offer_id: held.offer.offer_id }, state, emit);
+  const search = JSON.parse((await execute("call_gateway", { errand_ref: "E1", business_id: "saffron-room", intent: "availability.search", params: { date: plus(2), time: "19:30", party_size: 4 } }, state, emit)).content);
+  const held = JSON.parse((await execute("call_gateway", { errand_ref: "E1", business_id: "saffron-room", intent: "table.hold", params: { slot_id: search.slots[0].slot_id, party_size: 4 } }, state, emit)).content);
+  const over = await execute("commit_offer", { errand_ref: "E1", offer_id: held.offer.offer_id }, state, emit);
   assert.equal(JSON.parse(over.content).error, "MANDATE_CAP_EXCEEDED"); // ₹2,000 > ₹1,500 cap
 
   const state2 = freshState({ cap: 5000, askAbove: 500 });
-  const held2 = JSON.parse(execute("call_gateway", { errand_ref: "E1", business_id: "saffron-room", intent: "table.hold", params: { slot_id: search.slots[0].slot_id, party_size: 2 } }, state2, emit).content);
-  assert.equal(JSON.parse(execute("commit_offer", { errand_ref: "E1", offer_id: held2.offer.offer_id }, state2, emit).content).error, "APPROVAL_REQUIRED");
-  const pause = execute("request_approval", { errand_ref: "E1", offer_id: held2.offer.offer_id, question: "OK?" }, state2, emit);
+  const held2 = JSON.parse((await execute("call_gateway", { errand_ref: "E1", business_id: "saffron-room", intent: "table.hold", params: { slot_id: search.slots[0].slot_id, party_size: 2 } }, state2, emit)).content);
+  assert.equal(JSON.parse((await execute("commit_offer", { errand_ref: "E1", offer_id: held2.offer.offer_id }, state2, emit)).content).error, "APPROVAL_REQUIRED");
+  const pause = await execute("request_approval", { errand_ref: "E1", offer_id: held2.offer.offer_id, question: "OK?" }, state2, emit);
   assert.ok(pause.pause);
   state2.approvals[held2.offer.offer_id] = true;
-  assert.equal(JSON.parse(execute("commit_offer", { errand_ref: "E1", offer_id: held2.offer.offer_id }, state2, emit).content).status, "confirmed");
+  assert.equal(JSON.parse((await execute("commit_offer", { errand_ref: "E1", offer_id: held2.offer.offer_id }, state2, emit)).content).status, "confirmed");
 });
 
 test("a full run pauses for approval, survives sealing, and finishes", async () => {
@@ -83,8 +84,10 @@ test("a full run pauses for approval, survives sealing, and finishes", async () 
   }
   assert.equal(outcome, "done");
   const plan = events.find((e) => e.t === "plan").plan;
-  assert.equal(plan.errands.length, 5);
-  assert.equal(events.filter((e) => e.t === "receipt").length, 3, "dinner, dentist and gym confirmed");
+  assert.equal(plan.errands.length, 4);
+  assert.equal(events.filter((e) => e.t === "receipt").length, 2, "dinner and plumber confirmed");
+  assert.ok(events.some((e) => e.t === "live" && e.kind === "weather"), "weather fetched");
+  assert.ok(events.some((e) => e.t === "live" && e.kind === "places" && e.places.length), "real places found");
   assert.ok(events.some((e) => e.t === "ledger" && e.title === "Approved by you"));
   assert.ok(events.some((e) => e.t === "calendar") && events.some((e) => e.t === "draft"));
   // Append-only history: every tool_use is answered by a tool_result in the next user message.
@@ -108,6 +111,27 @@ test("declining an approval leaves the errand uncommitted", async () => {
     outcome = await runLoop(state, emit, { client: mockClient });
   }
   assert.equal(outcome, "done");
-  const gym = events.find((e) => e.t === "plan").plan.errands.find((e) => e.ref === "E3");
-  assert.equal(gym.status, "skipped");
+  const dinner = events.find((e) => e.t === "plan").plan.errands.find((e) => e.ref === "E2");
+  assert.equal(dinner.status, "skipped");
+  assert.equal(events.filter((e) => e.t === "receipt").length, 1, "only the auto-approved plumber visit");
+});
+
+test("live tools: weather, places, fx parse real response shapes; flight needs a key", async () => {
+  const w = await weather({ place: "Delhi", date_from: plus(3) }, { today });
+  assert.equal(w.days[0].summary, "showers");
+  assert.equal(w.days[0].max_c, 29.3);
+  assert.match((await weather({ place: "Delhi", date_from: plus(30) }, { today })).error, /16 days/);
+  const p = await places({ what: "restaurant", area: "Bandra West" }, { cityLabel: "Mumbai", currency: "INR" });
+  assert.equal(p.places[1].phone, "022 3296 9618");
+  assert.match(p.places[0].map, /openstreetmap\.org\/node\//);
+  const r = await fx({ amount: 500, from: "AED", to: "INR" });
+  assert.ok(r.error || r.converted > 0);
+  delete process.env.AERODATABOX_KEY;
+  assert.equal((await flight({ flight_number: "AI2631" }, { today })).error, "NOT_CONNECTED");
+  process.env.AERODATABOX_KEY = "test";
+  const f = await flight({ flight_number: "AI 2631", date: plus(5) }, { today }, async () => true);
+  assert.equal(f.status, "Expected");
+  assert.equal(f.departure.terminal, "2");
+  assert.equal((await flight({ flight_number: "AI2631" }, { today }, async () => false)).error, "QUOTA");
+  delete process.env.AERODATABOX_KEY;
 });
