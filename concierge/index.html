@@ -560,7 +560,12 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
           var flips = function () { return calendar.filter(function (x) { return x.ref === e.ref && x.alt_start; }); };
           var label = function () { var x = flips()[0]; fb.textContent = "Switch to " + partOf(x.alt_start) + " (" + x.alt_start.slice(11, 16) + ")"; };
           fb.addEventListener("click", function () {
-            flips().forEach(function (x) { var s = x.start; x.start = x.alt_start; x.alt_start = s; x.read_as = partOf(x.start); drawEvent(x); });
+            flips().forEach(function (x) {
+              var s = x.start; x.start = x.alt_start; x.alt_start = s; x.read_as = partOf(x.start);
+              // Keep a title like "Flight to Delhi (6:30 am)" in step with the switch.
+              x.title = x.title.replace(/\b(\d{1,2}(?:[:.]\d{2})?)\s*(am|pm|a\.m\.|p\.m\.)/gi, function (m, t, ap) { return t + " " + (/^a/i.test(ap) ? "pm" : "am"); });
+              drawEvent(x);
+            });
             label();
           });
           label();
