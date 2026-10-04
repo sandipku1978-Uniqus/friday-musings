@@ -294,3 +294,20 @@ test("calendar entries are 'ready to add', never 'added'", async () => {
   assert.equal(plan.headline, "Calendar entry ready to add.");
   assert.equal(plan.errands[0].outcome, "Reminders ready to add for Sunday.");
 });
+
+test("an ambiguous time gets the other reading as a one-tap switch", async () => {
+  const state = freshState();
+  const events = [];
+  const emit = (e) => events.push(e);
+  const am = JSON.parse((await execute("add_calendar_event", { errand_ref: "E1", title: "Flight to Delhi", start: plus(5) + "T06:30", ambiguous_time: true }, state, emit)).content);
+  assert.equal(events[0].event.alt_start, plus(5) + "T18:30");
+  assert.equal(events[0].event.read_as, "am");
+  assert.match(am.note, /switch it to 18:30 \(pm\)/);
+  await execute("add_calendar_event", { errand_ref: "E2", title: "Show", start: plus(5) + "T20:00", ambiguous_time: true }, state, emit);
+  assert.equal(events[1].event.alt_start, plus(5) + "T08:00", "pm flips to am, same day");
+  await execute("add_calendar_event", { errand_ref: "E3", title: "Dinner", start: plus(5) + "T20:00" }, state, emit);
+  assert.equal(events[2].event.alt_start, undefined, "unflagged times stay as they are");
+  await execute("add_calendar_event", { errand_ref: "E4", title: "Birthday", start: plus(6), ambiguous_time: true }, state, emit);
+  assert.equal(events[3].event.alt_start, undefined, "all-day entries have no time to flip");
+  assert.equal(events[0].event.tz, "Asia/Kolkata", "every timed entry carries its city's zone");
+});

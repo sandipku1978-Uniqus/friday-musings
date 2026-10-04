@@ -392,10 +392,28 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
     return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
   }
   function compact(local) { return local.replace(/[-:]/g, "") + (local.length > 10 ? "00" : ""); }
+  // Times are wall-clock times in the errand city's zone. A calendar file without a zone shows them
+  // in whatever zone the phone is in, so a Dubai 21:30 dinner would open as 21:30 in Mumbai. Convert
+  // to UTC instead; every calendar app shows it back in the reader's own time.
+  function tzOffset(ms, zone) {
+    var p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+      .formatToParts(new Date(ms)).forEach(function (x) { p[x.type] = +x.value; });
+    return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - ms;
+  }
+  function utcStamp(local, zone) {
+    var wall = Date.UTC(+local.slice(0, 4), +local.slice(5, 7) - 1, +local.slice(8, 10), +local.slice(11, 13), +local.slice(14, 16));
+    var utc = wall - tzOffset(wall, zone);
+    utc = wall - tzOffset(utc, zone); // second pass settles a guess that crossed a DST change
+    return new Date(utc).toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  }
   function span(ev) {
     if (ev.all_day) return [ev.start.replace(/-/g, ""), shift(ev.start + "T00:00", 1440).slice(0, 10).replace(/-/g, "")];
-    return [compact(ev.start), compact(shift(ev.start, ev.duration_minutes || 30))];
+    var end = shift(ev.start, ev.duration_minutes || 30);
+    try { if (ev.tz) return [utcStamp(ev.start, ev.tz), utcStamp(end, ev.tz)]; } catch (e) { /* unknown zone: fall back to floating time */ }
+    return [compact(ev.start), compact(end)];
   }
+  var ZONE_NAME = { "Asia/Kolkata": "India time", "Asia/Dubai": "Dubai time", "America/New_York": "New York time" };
   function icsText(s) { return String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
   function fold(line) { var out = []; while (line.length > 74) { out.push(line.slice(0, 74)); line = " " + line.slice(74); } out.push(line); return out.join("\r\n"); }
   function ics(events) {
@@ -425,7 +443,23 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
   function when(ev) {
     var d = new Date(ev.start.slice(0, 10) + "T12:00:00Z");
     var day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
-    return ev.all_day ? day : day + ", " + ev.start.slice(11, 16);
+    if (ev.all_day) return day;
+    return day + ", " + ev.start.slice(11, 16) + (elsewhere(ev) ? " " + ZONE_NAME[ev.tz] : "");
+  }
+  // A 12-hour flip always swaps am and pm, whatever the derived time (a 04:15 "leave for the
+  // airport" for a 6:30 flight), so the switch speaks in am/pm rather than morning/afternoon.
+  function partOf(local) { return +local.slice(11, 13) < 12 ? "am" : "pm"; }
+  function drawEvent(ev) {
+    ev.line.innerHTML = "Ready to add: <b>" + esc(ev.title) + "</b> · " + esc(when(ev)) + (ev.alt_start ? " · <i>read as " + partOf(ev.start) + "</i>" : "");
+  }
+  // Name the zone only when the visitor's device keeps different time at that moment; otherwise
+  // it's noise. Offsets, not names: a Mumbai phone may call its zone Asia/Calcutta.
+  function elsewhere(ev) {
+    if (!ev.tz || !ZONE_NAME[ev.tz]) return false;
+    try {
+      var ms = Date.UTC(+ev.start.slice(0, 4), +ev.start.slice(5, 7) - 1, +ev.start.slice(8, 10), 12);
+      return tzOffset(ms, ev.tz) !== -new Date(ms).getTimezoneOffset() * 60000;
+    } catch (e) { return false; }
   }
 
   /* ---------- Drafts ---------- */
@@ -510,15 +544,28 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
       }
       case "calendar": {
         var ev = e.event, mc = touch(e.ref, null);
+        ev.ref = e.ref;
         calendar.push(ev);
-        var cb = el("div", "facts"); cb.appendChild(el("span", "", "Ready to add: <b>" + esc(ev.title) + "</b> · " + esc(when(ev))));
-        sub(mc).appendChild(cb);
+        var cb = el("div", "facts"), line = el("span");
+        cb.appendChild(line); sub(mc).appendChild(cb);
+        Object.defineProperty(ev, "line", { value: line, enumerable: false });
+        drawEvent(ev);
         if (!mc.el.querySelector(".cal")) {
           var b = el("button", "btn cal", "Add to calendar"); b.type = "button";
           b.addEventListener("click", function () { download(calendar.filter(function (x) { return x.ref === e.ref; }), fileName(mc.title)); });
           acts(mc).appendChild(b);
         }
-        ev.ref = e.ref;
+        if (ev.alt_start && !mc.el.querySelector(".flip")) {
+          var fb = el("button", "btn small flip"); fb.type = "button";
+          var flips = function () { return calendar.filter(function (x) { return x.ref === e.ref && x.alt_start; }); };
+          var label = function () { var x = flips()[0]; fb.textContent = "Switch to " + partOf(x.alt_start) + " (" + x.alt_start.slice(11, 16) + ")"; };
+          fb.addEventListener("click", function () {
+            flips().forEach(function (x) { var s = x.start; x.start = x.alt_start; x.alt_start = s; x.read_as = partOf(x.start); drawEvent(x); });
+            label();
+          });
+          label();
+          acts(mc).appendChild(fb);
+        }
         break;
       }
       case "draft": {
