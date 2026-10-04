@@ -190,6 +190,17 @@ section.block { padding-block: 64px; }
 .live-cta b { color: #fff; font-size: 1.1rem; display: block; margin-bottom: 4px; }
 .live-cta a { background: var(--grad); color: #fff; text-decoration: none; font-weight: 700; padding: 11px 20px; border-radius: 999px; white-space: nowrap; }
 
+/* ---------- Try it + Go deeper ---------- */
+.try { background: var(--hero); color: #FFFFFF; }
+.try h2 { color: #FFFFFF; }
+.try-grid { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 28px; }
+.try-copy { flex: 1 1 520px; min-width: 0; display: grid; gap: 12px; }
+.try-copy p { color: #D9D4E2; max-width: 40em; }
+.try-copy p.frame { color: #B9B3C4; font-size: .92rem; font-style: italic; }
+.try-btn { background: linear-gradient(90deg, #B21E7D, #482879); color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 1.08rem; padding: 16px 28px; border-radius: 999px; white-space: nowrap; }
+.try-btn:hover { filter: brightness(1.1); }
+.deeper { border-top: 1px solid var(--line); padding-bottom: 0; }
+
 /* ---------- Two front doors ---------- */
 .doors { margin-top: 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
 .seg { display: inline-flex; background: var(--surface-2); border-radius: 999px; padding: 4px; gap: 4px; border: 1px solid var(--line); }
@@ -296,7 +307,7 @@ footer a { color: #E46BB0; }
         <p class="eyebrow" style="color:#E46BB0">The concierge economy</p>
         <h1 style="margin-top:12px">Who picks up when <em>your agent</em> calls?</h1>
         <p class="dek">WhatsApp turned every business into a chat window. Personal agents like Muse, dots, Instinct and Fo will turn every business into an endpoint. That changes how we buy, and it changes what a control looks like.</p>
-        <p class="byline"><b>Sandip Khetan</b> · Co-Founder, Uniqus Consultech · 7 min read · <a href="/concierge/" style="color:#E46BB0">or give a live concierge your chores</a></p>
+        <p class="byline"><b>Sandip Khetan</b> · Co-Founder, Uniqus Consultech · 7 min read · <a href="#try" style="color:#E46BB0">or try the live concierge</a></p>
       </div>
       <div class="call" id="call">
         <div class="call-head">
@@ -322,7 +333,77 @@ footer a { color: #E46BB0; }
 <div class="gradbar"></div>
 
 <main>
-  <section class="block">
+  <section class="block" id="musing">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The musing</p>
+        <h2>From "are you on WhatsApp?" to "can my agent talk to yours?"</h2>
+      </div>
+      <div class="essay">
+        <p>A Meta employee asked Muse to call his insurance company. The insurer kept hanging up the moment it heard an AI. Meta's fix, tested quietly and then rolled back, was to hand some of those calls to human contractors. One of the most capable consumer agents ever shipped needed a person to get through a phone tree.</p>
+        <p>That one anecdote tells you where the bottleneck is. The agents are good enough. The front doors aren't ready for them.</p>
+        <p>Remember when every business, from the corner pharmacy in Pune to the bank in Dubai, had to get a WhatsApp number? Customers didn't want to visit a website or wait on hold. They wanted to message. Businesses went where the conversation was.</p>
+        <p>The next shift is bigger. Your customer won't message you. Their concierge will. It will compare three quotes in the time it takes you to say "please hold", and it will not tolerate a CAPTCHA. Businesses that can answer an agent in structured terms will get the booking. Businesses that hang up will lose a customer without ever knowing one called.</p>
+        <blockquote>WhatsApp made every business a chat. Agents will make every business an endpoint.</blockquote>
+        <p>So someone has to build the agent gateway: a website that publishes what it can do for machines, a phone line that recognises an agent caller and switches to a structured channel, a way to check which agent is calling and whose authority it carries, and a receipt both sides can rely on. The pieces are appearing (agent cards, Web Bot Auth, PACT, x402). The plumbing is the easy part.</p>
+        <p>The hard part is the one I've spent my career on. Every agent errand is a delegated transaction. Delegation needs authorization, limits, segregation and evidence. If your dot approved a purchase order at 2am, who owned that control? Who reviewed its access last quarter? Where is the receipt?</p>
+        <p>Read the terms and the answer is already there. Wajo's Fo, one of the most careful of the new agents (single-use cards, its own inbox, humans for the hard bits), still makes you responsible "as if you had taken those actions yourself". The agent acts; you own the control. Most people will connect a card long before they write a mandate.</p>
+        <p>In the WhatsApp era the question was "are you on WhatsApp?" In the agent era it will be "can my agent talk to yours?" For those of us in controls, there's a follow-up: "can you prove what it agreed to?"</p>
+        <p>Have a great weekend. If your concierge is reading this for you, say hello.</p>
+      </div>
+
+    </div>
+  </section>
+  <section class="block try" id="try">
+    <div class="wrap try-grid">
+      <div class="try-copy">
+        <p class="eyebrow" style="color:#E46BB0">Try it yourself</p>
+        <h2>Give a live concierge your errands</h2>
+        <p>Type your week the way you'd text a friend, Hinglish included. It checks real weather, finds real places near you, books with businesses that answer agents, and stops to ask before it spends. It works from India; no Muse or dots account needed.</p>
+        <p class="frame">A demo built to make the argument tangible. The businesses are fictional; the data is real.</p>
+      </div>
+      <a class="try-btn" href="/concierge/">Try the live concierge</a>
+    </div>
+  </section>
+  <section class="block ctrl">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The takeaway</p>
+        <h2>Every agent errand is a delegated transaction</h2>
+      </div>
+      <p class="lede">We already know how to govern delegation. It's called a delegation-of-authority matrix, and we test it every year. The agent era doesn't need new philosophy. It needs the old assertions applied to a new kind of actor.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Assertion</th><th>The question your auditor will ask</th><th>What good looks like</th></tr></thead>
+          <tbody>
+            <tr><td>Authorization</td><td>Did a human give this agent authority for this kind of transaction, within limits?</td><td>A signed mandate with scope, spending cap, approval threshold and expiry. A DOA matrix, per agent.</td></tr>
+            <tr><td>Identity (KYA)</td><td>Which agent acted, and for whom?</td><td>A cryptographic agent identity plus a vouched human principal. Know Your Agent, alongside KYC. No shared passwords or relayed OTPs.</td></tr>
+            <tr><td>Accuracy</td><td>Is what was agreed what was recorded?</td><td>Structured offers and commits instead of a paraphrased phone call. The receipt carries the terms.</td></tr>
+            <tr><td>Completeness</td><td>Is every agent action in the log, including the failures and refusals?</td><td>Append-only activity logs on both sides, with agent receipts reconciled to the ERP and the bank feed.</td></tr>
+            <tr><td>Segregation and revocation</td><td>Can the agent that requests also approve? Can you switch it off at 2am?</td><td>Request and approval split between agent and human, or between keys. A kill switch. Day-one deprovisioning.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <b>Your next user access review will have new names in it</b>
+        <p>OpenAI is previewing specialist dots with "their own identity for access management", plus credentials into a company's systems of record. Those are users. They need provisioning, periodic access review, and termination like everyone else, and they work weekends. COSO Principle 11 (general controls over technology) just gained a new population.</p>
+      </div>
+      <div class="callout">
+        <b>Read the terms: the liability stays with you</b>
+        <p>Wajo's terms for Fo, as reported at launch, make the user responsible for the agent's actions "as if you had taken those actions yourself". And if you don't configure spending controls, Wajo "may act on any instructions it reasonably determines were provided by you within the scope of your general authorization". In control terms, the user is the control owner, and the mandate is the only control they hold. Set it before you connect a card.</p>
+      </div>
+    </div>
+  </section>
+  <section class="block deeper" id="deeper">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Go deeper</p>
+        <h2>Play with the idea</h2>
+      </div>
+      <p class="lede">The five agents that launched this autumn, a scripted simulator you can run with and without a gateway, six bets, and a readiness check for your own business.</p>
+    </div>
+  </section>
+  <section class="block" style="padding-top:24px">
     <div class="wrap">
       <div class="section-head">
         <p class="eyebrow">September 2026</p>
@@ -358,7 +439,6 @@ footer a { color: #E46BB0; }
       </div>
     </div>
   </section>
-
   <section class="block" id="simulator" style="padding-top:0">
     <div class="wrap">
       <div class="section-head">
@@ -409,7 +489,6 @@ footer a { color: #E46BB0; }
       <p class="sim-note">Simulation. The businesses, numbers and handshake messages are illustrative. The handshake borrows from real open standards: A2A-style agent cards, Web Bot Auth for agent identity, PACT tokens for a vouched human, and x402 for agent payments.</p>
     </div>
   </section>
-
   <section class="block" style="padding-top:0">
     <div class="wrap">
       <div class="section-head">
@@ -466,37 +545,6 @@ footer a { color: #E46BB0; }
       </div>
     </div>
   </section>
-
-  <section class="block ctrl">
-    <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">The controller's view</p>
-        <h2>Every agent errand is a delegated transaction</h2>
-      </div>
-      <p class="lede">We already know how to govern delegation. It's called a delegation-of-authority matrix, and we test it every year. The agent era doesn't need new philosophy. It needs the old assertions applied to a new kind of actor.</p>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Assertion</th><th>The question your auditor will ask</th><th>What good looks like</th></tr></thead>
-          <tbody>
-            <tr><td>Authorization</td><td>Did a human give this agent authority for this kind of transaction, within limits?</td><td>A signed mandate with scope, spending cap, approval threshold and expiry. A DOA matrix, per agent.</td></tr>
-            <tr><td>Identity (KYA)</td><td>Which agent acted, and for whom?</td><td>A cryptographic agent identity plus a vouched human principal. Know Your Agent, alongside KYC. No shared passwords or relayed OTPs.</td></tr>
-            <tr><td>Accuracy</td><td>Is what was agreed what was recorded?</td><td>Structured offers and commits instead of a paraphrased phone call. The receipt carries the terms.</td></tr>
-            <tr><td>Completeness</td><td>Is every agent action in the log, including the failures and refusals?</td><td>Append-only activity logs on both sides, with agent receipts reconciled to the ERP and the bank feed.</td></tr>
-            <tr><td>Segregation and revocation</td><td>Can the agent that requests also approve? Can you switch it off at 2am?</td><td>Request and approval split between agent and human, or between keys. A kill switch. Day-one deprovisioning.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="callout">
-        <b>Your next user access review will have new names in it</b>
-        <p>OpenAI is previewing specialist dots with "their own identity for access management", plus credentials into a company's systems of record. Those are users. They need provisioning, periodic access review, and termination like everyone else, and they work weekends. COSO Principle 11 (general controls over technology) just gained a new population.</p>
-      </div>
-      <div class="callout">
-        <b>Read the terms: the liability stays with you</b>
-        <p>Wajo's terms for Fo, as reported at launch, make the user responsible for the agent's actions "as if you had taken those actions yourself". And if you don't configure spending controls, Wajo "may act on any instructions it reasonably determines were provided by you within the scope of your general authorization". In control terms, the user is the control owner, and the mandate is the only control they hold. Set it before you connect a card.</p>
-      </div>
-    </div>
-  </section>
-
   <section class="block">
     <div class="wrap">
       <div class="section-head">
@@ -507,7 +555,6 @@ footer a { color: #E46BB0; }
       <p class="tally" id="tally"></p>
     </div>
   </section>
-
   <section class="block" style="padding-top:0">
     <div class="wrap">
       <div class="section-head">
@@ -527,36 +574,8 @@ footer a { color: #E46BB0; }
       </div>
     </div>
   </section>
-
-  <section class="block ctrl" id="musing">
+  <section class="block" style="padding-top:0">
     <div class="wrap">
-      <div class="section-head">
-        <p class="eyebrow">The musing</p>
-        <h2>From "are you on WhatsApp?" to "can my agent talk to yours?"</h2>
-      </div>
-      <div class="essay">
-        <p>A Meta employee asked Muse to call his insurance company. The insurer kept hanging up the moment it heard an AI. Meta's fix, tested quietly and then rolled back, was to hand some of those calls to human contractors. One of the most capable consumer agents ever shipped needed a person to get through a phone tree.</p>
-        <p>That one anecdote tells you where the bottleneck is. The agents are good enough. The front doors aren't ready for them.</p>
-        <p>Remember when every business, from the corner pharmacy in Pune to the bank in Dubai, had to get a WhatsApp number? Customers didn't want to visit a website or wait on hold. They wanted to message. Businesses went where the conversation was.</p>
-        <p>The next shift is bigger. Your customer won't message you. Their concierge will. It will compare three quotes in the time it takes you to say "please hold", and it will not tolerate a CAPTCHA. Businesses that can answer an agent in structured terms will get the booking. Businesses that hang up will lose a customer without ever knowing one called.</p>
-        <blockquote>WhatsApp made every business a chat. Agents will make every business an endpoint.</blockquote>
-        <p>So someone has to build the agent gateway: a website that publishes what it can do for machines, a phone line that recognises an agent caller and switches to a structured channel, a way to check which agent is calling and whose authority it carries, and a receipt both sides can rely on. The pieces are appearing (agent cards, Web Bot Auth, PACT, x402). The plumbing is the easy part.</p>
-        <p>The hard part is the one I've spent my career on. Every agent errand is a delegated transaction. Delegation needs authorization, limits, segregation and evidence. If your dot approved a purchase order at 2am, who owned that control? Who reviewed its access last quarter? Where is the receipt?</p>
-        <p>Read the terms and the answer is already there. Wajo's Fo, one of the most careful of the new agents (single-use cards, its own inbox, humans for the hard bits), still makes you responsible "as if you had taken those actions yourself". The agent acts; you own the control. Most people will connect a card long before they write a mandate.</p>
-        <p>In the WhatsApp era the question was "are you on WhatsApp?" In the agent era it will be "can my agent talk to yours?" For those of us in controls, there's a follow-up: "can you prove what it agreed to?"</p>
-        <p>Have a great weekend. If your concierge is reading this for you, say hello.</p>
-      </div>
-
-      <div class="post">
-        <div class="post-head">
-          <b>LinkedIn post, ready to paste</b>
-          <button class="copy" id="copyPost" type="button">Copy post</button>
-        </div>
-        <label for="postText" class="hint">Edit freely. Check the link matches your deployed domain.</label>
-        <textarea id="postText"></textarea>
-        <p class="hint" id="copyMsg" aria-live="polite"></p>
-      </div>
-
       <div class="sources">
         <b>Sources</b>
         <ol>
@@ -972,48 +991,6 @@ footer a { color: #E46BB0; }
   }
   paintScore();
 
-  /* ---------- LinkedIn post ---------- */
-  var POST = [
-    "Who picks up when your agent calls?",
-    "",
-    "A Meta employee asked Muse to call his insurer. The insurer kept hanging up the moment it heard an AI. Meta's fix, quietly tested and then rolled back: hand some calls to human contractors.",
-    "",
-    "The agents are ready. The front doors aren't.",
-    "",
-    "In eight weeks we got Meta's Muse, OpenAI's dots, Instinct, Wajo's Fo and Grok Bot. Each wants to be your personal concierge. Soon your customer won't visit your website or wait on hold. Their agent will, and it won't solve your CAPTCHA.",
-    "",
-    "WhatsApp made every business a chat. Agents will make every business an endpoint.",
-    "",
-    "So businesses need an agent gateway: a site that tells machines what it can do, a phone line that recognises an agent caller, a way to verify which agent is calling and whose mandate it carries, and a receipt both sides trust.",
-    "",
-    "Wearing my controls hat, every agent errand is a delegated transaction:",
-    "→ Authorization: a signed mandate with limits and expiry",
-    "→ Identity: Know Your Agent, next to KYC",
-    "→ Accuracy: structured terms, not a paraphrased call",
-    "→ Completeness: every action logged, failures included",
-    "→ Segregation: the agent that requests shouldn't approve",
-    "",
-    "And your next user access review will have new names in it. They work weekends.",
-    "",
-    "For this Friday Musing I built two things you can play with:",
-    "1. A simulator: send a concierge to book dinner in Dubai, change a flight in India or dispute a charge with a US bank, with and without a gateway.",
-    "2. A live concierge (Claude Sonnet 5.5). Type your real errands, in Hinglish if you like. It books with demo businesses that answer agents, builds your calendar, drafts your WhatsApps, and asks before it spends. No Muse or dots account needed, and it works from India.",
-    "",
-    "Read and play: https://friday-musings.vercel.app/2026-10-03-who-picks-up/",
-    "",
-    "Six bets inside. Tell me which one I've got wrong.",
-    "",
-    "#FridayMusings #AgenticAI #InternalControls #SOX #FutureOfWork"
-  ].join("\n");
-  var ta = $("postText");
-  ta.value = store("musing-post") || POST;
-  ta.addEventListener("input", function () { store("musing-post", ta.value); });
-  $("copyPost").addEventListener("click", function () {
-    var msg = $("copyMsg");
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = "Copied. Paste it into LinkedIn."; }, function () { ta.select(); msg.textContent = "Text selected. Press Ctrl+C or ⌘C to copy."; });
-    } else { ta.select(); msg.textContent = "Text selected. Press Ctrl+C or ⌘C to copy."; }
-  });
 })();
 </script>
 </body>
