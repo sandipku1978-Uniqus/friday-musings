@@ -341,3 +341,53 @@ test("gateway: every service gets a usable slot id, and holds are refused for sl
   }
   assert.ok(refused > 0 && accepted > 0, `refused ${refused}, accepted ${accepted}`);
 });
+
+test("finish: a quote the visitor must complete is human_only, whatever the model said; 'None' next steps are dropped", async () => {
+  const state = freshState();
+  state.errands = [{ ref: "E1", title: "Car insurance" }, { ref: "E2", title: "Dentist" }, { ref: "E3", title: "Weather" }];
+  const events = [];
+  const emit = (e) => events.push(e);
+  const quote = await call(state, "E1", "shieldsure", "renewal.quote", { product: "car", current_expiry: plus(16), claims_last_year: "no" });
+  assert.equal(quote.human_required, true);
+  const search = await call(state, "E2", "citycare-clinic", "slots.search", { specialty: "dentist", date_from: plus(2), part_of_day: "evening" });
+  const held = await call(state, "E2", "citycare-clinic", "appointment.hold", { slot_id: search.slots[0].slot_id, patient_first_name: "A", visit_reason: "routine" });
+  state.approvals[held.offer.offer_id] = true; // the slot may not be in the evening; that's not what this test is about
+  assert.equal((await commitIt(state, "E2", held.offer.offer_id)).status, "confirmed");
+  await execute("finish", { headline: "Done.", errands: [
+    { ref: "E1", status: "scheduled", outcome: "Quote ready, reminders ready to add.", your_next_step: "Complete KYC." },
+    { ref: "E2", status: "done", outcome: "Booked." },
+    { ref: "E3", status: "done", outcome: "Clear.", your_next_step: "None." },
+  ] }, state, emit);
+  const plan = events.find((e) => e.t === "plan").plan;
+  assert.equal(plan.errands[0].status, "human_only", "the model said scheduled; the server knows better");
+  assert.equal(plan.errands[1].status, "done", "a booked errand keeps its status");
+  assert.equal(plan.errands[2].your_next_step, "", "'None.' is not a next step");
+});
+
+test("live lookups in one turn run together, not one after another", async () => {
+  const delay = 250;
+  setFetch((url, opts) => new Promise((r) => setTimeout(() => r(fakeFetch(url, opts)), delay)));
+  try {
+    const state = freshState();
+    let turn = 0;
+    const client = { messages: { create: async () => {
+      turn++;
+      const use = (name, input) => ({ type: "tool_use", id: `toolu_${turn}_${name}`, name, input });
+      if (turn === 1) return { content: [
+        use("check_weather", { errand_ref: "E1", place: "Delhi", date_from: plus(3), days: 1 }),
+        use("find_places", { errand_ref: "E2", what: "restaurant", area: "Bandra West" }),
+        use("convert_currency", { errand_ref: "E3", amount: 100, from: "USD", to: "INR" }),
+      ], stop_reason: "tool_use", usage: {} };
+      return { content: [use("finish", { headline: "ok", errands: [] })], stop_reason: "tool_use", usage: {} };
+    } }, beta: { messages: { create: async (p) => client.messages.create(p) } } };
+    const started = Date.now();
+    assert.equal(await runLoop(state, () => {}, { client }), "done");
+    const took = Date.now() - started;
+    // Weather is 2 fetches and places 2 (geocode + Overpass): about 4 delays if run together, 6 or more if not.
+    assert.ok(took < delay * 5.5, `took ${took} ms`);
+    const answered = state.messages[2].content.filter((b) => b.type === "tool_result").map((b) => b.tool_use_id).sort();
+    assert.deepEqual(answered, ["toolu_1_check_weather", "toolu_1_convert_currency", "toolu_1_find_places"], "every call answered");
+  } finally {
+    setFetch(fakeFetch);
+  }
+});
