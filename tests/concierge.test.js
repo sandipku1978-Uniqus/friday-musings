@@ -311,3 +311,33 @@ test("an ambiguous time gets the other reading as a one-tap switch", async () =>
   assert.equal(events[3].event.alt_start, undefined, "all-day entries have no time to flip");
   assert.equal(events[0].event.tz, "Asia/Kolkata", "every timed entry carries its city's zone");
 });
+
+test("gateway: every service gets a usable slot id, and holds are refused for slots never offered", () => {
+  // ac_service used to produce "FX-AC_-..." ids that the gateway's own parser rejected.
+  for (const service of ["plumbing", "electrical", "ac_service", "appliance_repair", "pest_control", "deep_cleaning"]) {
+    const search = handle("fixit-home", "visit.search", { service, date_from: plus(2), part_of_day: "morning" }, ctx);
+    assert.ok(search.ok && search.slots.length, service);
+    const hold = handle("fixit-home", "visit.hold", { slot_id: search.slots[0].slot_id, customer_first_name: "A", issue_summary: "Check" }, ctx);
+    assert.ok(hold.ok, `${service}: ${JSON.stringify(hold)}`);
+  }
+  for (const specialty of ["gp", "dentist", "dermatology", "physio"]) {
+    const search = handle("citycare-clinic", "slots.search", { specialty, date_from: plus(2), part_of_day: "afternoon" }, ctx);
+    const hold = handle("citycare-clinic", "appointment.hold", { slot_id: search.slots[0].slot_id, patient_first_name: "A", visit_reason: "routine" }, ctx);
+    assert.ok(hold.ok, specialty);
+    assert.equal(hold.offer.amount, { gp: 800, dentist: 1200, dermatology: 1500, physio: 1000 }[specialty], `${specialty} keeps its own fee`);
+  }
+  const real = handle("fixit-home", "visit.search", { service: "ac_service", date_from: plus(2), part_of_day: "morning" }, ctx).slots[0].slot_id;
+  const day = real.split("-")[2];
+  const guess = (id) => handle("fixit-home", "visit.hold", { slot_id: id, customer_first_name: "A", issue_summary: "Check" }, ctx);
+  assert.match(guess(`FX-AC-${day}-1200`).error.message, /no "AC" service/, "a made-up key");
+  assert.match(guess(`FX-ZZZ-${day}-1200`).error.message, /no "ZZZ" service/);
+  assert.match(guess("FX-ACS-20200101-1200").error.message, /in the past/);
+  assert.match(guess(`FX-ACS-${day}-0300`).error.message, /opening hours/);
+  // Its availability rule marks about a quarter of slots taken; guessing through the day must hit some.
+  let refused = 0, accepted = 0;
+  for (let m = 540; m <= 1290; m += 30) {
+    const r = guess(`FX-ACS-${day}-${String(Math.floor(m / 60)).padStart(2, "0")}${String(m % 60).padStart(2, "0")}`);
+    if (r.ok) accepted++; else { assert.match(r.error.message, /isn't available/); refused++; }
+  }
+  assert.ok(refused > 0 && accepted > 0, `refused ${refused}, accepted ${accepted}`);
+});
