@@ -359,7 +359,11 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
     m.state = s;
     m.el.querySelector(".icw").innerHTML = ICON[s];
     m.el.classList.toggle("active", s === "active");
-    if (s === "active") { if (active && active !== m && active.state === "active") setState(active, "pending2"); active = m; }
+    if (s === "active") {
+      if (active && active !== m && active.state === "active") setState(active, "pending2");
+      active = m;
+      var line = m.el.querySelector(".line"); if (line.textContent === "Up next") line.textContent = "Working on it…";
+    }
   }
   ICON.pending2 = ICON.pending;
   function setTag(m, kind) {
@@ -463,12 +467,13 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
         setTag(m, "live");
         if (e.kind === "places") {
           var box = el("div", "facts");
-          if (!e.places || !e.places.length) box.textContent = (e.lines || [])[0] || "No listed places nearby.";
+          var note = (e.lines || [])[0] || (e.places && e.places.length ? "" : "No listed places nearby.");
+          if (note) box.appendChild(el("span", "", esc(note)));
           (e.places || []).slice(0, 3).forEach(function (p) {
             var row = el("div", "place");
             row.innerHTML = '<a class="name" target="_blank" rel="noopener"></a><small></small><div class="acts"></div>';
             var a = row.querySelector("a"); a.textContent = p.name; a.href = p.map;
-            row.querySelector("small").textContent = [p.kind, p.address, p.opening_hours].filter(Boolean).join(" · ");
+            row.querySelector("small").textContent = [p.kind, p.distance_km != null ? p.distance_km + " km away" : "", p.address, p.opening_hours].filter(Boolean).join(" · ");
             var ra = row.querySelector(".acts");
             if (p.phone) { var call = el("a", "btn small", "Call"); call.href = "tel:" + p.phone.replace(/[^\d+]/g, ""); ra.appendChild(call); }
             if (p.website) { var web = el("a", "btn small", "Website"); web.href = p.website; web.target = "_blank"; web.rel = "noopener"; ra.appendChild(web); }
@@ -476,7 +481,7 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
             box.appendChild(row);
           });
           sub(m).appendChild(box);
-          addFound((e.places || []).length + " real places for \"" + e.title.replace(/^Real places · /, "") + "\"", e.source);
+          addFound(e.summary || (e.places || []).length + " real places for \"" + e.title.replace(/^Real places · /, "") + "\"", e.source);
         } else {
           var f = el("div", "facts"); (e.lines || []).forEach(function (l) { f.appendChild(el("span", "", esc(l))); }); sub(m).appendChild(f);
           addFound(e.title + ": " + (e.lines || []).join("; "), e.source);
@@ -506,7 +511,7 @@ footer { padding-block: 20px calc(env(safe-area-inset-bottom, 0px) + 24px); font
       case "calendar": {
         var ev = e.event, mc = touch(e.ref, null);
         calendar.push(ev);
-        var cb = el("div", "facts"); cb.appendChild(el("span", "", "<b>" + esc(ev.title) + "</b> · " + esc(when(ev))));
+        var cb = el("div", "facts"); cb.appendChild(el("span", "", "Ready to add: <b>" + esc(ev.title) + "</b> · " + esc(when(ev))));
         sub(mc).appendChild(cb);
         if (!mc.el.querySelector(".cal")) {
           var b = el("button", "btn cal", "Add to calendar"); b.type = "button";

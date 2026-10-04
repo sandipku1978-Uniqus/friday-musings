@@ -2,10 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { handle, commit, todayIn, agentCard } from "../lib/gateway.js";
 import { seal, unseal, verifyReceipt } from "../lib/sign.js";
-import { execute, unref } from "../lib/tools.js";
+import { execute, unref, calendarWording } from "../lib/tools.js";
 import { runLoop, applyDecision } from "../lib/agent.js";
 import { mockClient } from "../lib/mock-model.js";
-import { weather, fx, flight, places } from "../lib/live.js";
+import { weather, fx, flight, places, parsePlaceQuery, setFetch } from "../lib/live.js";
+import { fakeFetch } from "../lib/mock-live.js";
 
 const today = todayIn("Asia/Kolkata");
 const plus = (d) => new Date(Date.parse(today + "T00:00:00Z") + d * 86400000).toISOString().slice(0, 10);
@@ -212,8 +213,9 @@ test("live tools: weather, places, fx parse real response shapes; flight needs a
   assert.equal(w.days[0].max_c, 29.3);
   assert.match((await weather({ place: "Delhi", date_from: plus(30) }, { today })).error, /16 days/);
   const p = await places({ what: "restaurant", area: "Bandra West" }, { cityLabel: "Mumbai", currency: "INR" });
-  assert.equal(p.places[1].phone, "022 3296 9618");
+  assert.ok(p.places.some((x) => x.phone === "022 3296 9618"));
   assert.match(p.places[0].map, /openstreetmap\.org\/node\//);
+  assert.equal(p.summary, "2 restaurants near Bandra West");
   const r = await fx({ amount: 500, from: "AED", to: "INR" });
   assert.ok(r.error || r.converted > 0);
   delete process.env.AERODATABOX_KEY;
@@ -224,4 +226,71 @@ test("live tools: weather, places, fx parse real response shapes; flight needs a
   assert.equal(f.departure.terminal, "2");
   assert.equal((await flight({ flight_number: "AI2631" }, { today }, async () => false)).error, "QUOTA");
   delete process.env.AERODATABOX_KEY;
+});
+
+test("places: plain words become fixed OSM tag filters", () => {
+  const veg = parsePlaceQuery("Vegetarian restaurant");
+  assert.equal(veg.label, "vegetarian restaurant");
+  assert.equal(veg.narrow.length, 1);
+  assert.equal(parsePlaceQuery("pure veg south indian food").label, "vegetarian south indian restaurant");
+  assert.equal(parsePlaceQuery("plumber").relatedLabel, "hardware and plumbing shop");
+  assert.equal(parsePlaceQuery("dentist").label, "dentist");
+  assert.equal(parsePlaceQuery("vegetarian dentist").narrow.length, 0, "diet narrows food places only");
+  assert.equal(parsePlaceQuery("something odd"), null);
+});
+
+test("places: vegetarian is filtered by tag, plumbers fall back to labelled shops, and visitor text never reaches Overpass", async () => {
+  const bodies = [];
+  setFetch((url, opts) => { if (/overpass/.test(url)) bodies.push(decodeURIComponent(String(opts.body))); return fakeFetch(url, opts); });
+  try {
+    const veg = await places({ what: "vegetarian restaurant\"];out;(", area: "Bandra West" }, { cityLabel: "Mumbai", currency: "INR" });
+    assert.deepEqual(veg.places.map((x) => x.name).sort(), ["Balaji Restaurant", "Love in Langos"]);
+    assert.match(veg.places.find((x) => x.name === "Love in Langos").kind, /pure vegetarian/);
+    assert.ok(veg.places.every((x) => typeof x.distance_km === "number"));
+    const plumber = await places({ what: "plumber" }, { cityLabel: "Mumbai", currency: "INR" });
+    assert.equal(plumber.related, true);
+    assert.match(plumber.summary, /^No plumbers listed; 2 hardware and plumbing shops nearby$/);
+    assert.match(plumber.for_agent, /not plumbers/);
+    assert.equal(plumber.places.find((x) => x.name === "Public Stores").phone, "+91 90299 11436", "one number per Call button");
+    assert.ok(bodies.length >= 2);
+    for (const b of bodies) {
+      assert.ok(!/around:/.test(b), "bounding boxes, not around");
+      assert.ok(!/vegetarian restaurant|\];out;\(|plumber"\]/i.test(b.replace(/"craft"="plumber"/, "")), "no visitor text in the query: " + b);
+    }
+  } finally {
+    setFetch(fakeFetch);
+  }
+});
+
+test("places: an Overpass timeout is 'couldn't check', not 'none listed'", async () => {
+  setFetch((url, opts) => (/overpass/.test(url)
+    ? Promise.resolve({ ok: true, status: 200, json: async () => ({ elements: [], remark: "runtime error: Query timed out in \"query\" at line 1 after 10 seconds." }) })
+    : fakeFetch(url, opts)));
+  try {
+    const veg = await places({ what: "vegan restaurant", area: "Khar" }, { cityLabel: "Mumbai", currency: "INR" }); // a query no earlier test cached
+    assert.ok(veg.places.length > 0, "falls back to the text search");
+    assert.match(veg.note, /Couldn't check which are vegan restaurants/);
+    assert.match(veg.for_agent, /not filtered/);
+  } finally {
+    setFetch(fakeFetch);
+  }
+});
+
+test("calendar entries are 'ready to add', never 'added'", async () => {
+  assert.equal(calendarWording("Calendar entry added with reminders."), "Calendar entry ready to add with reminders.");
+  assert.equal(calendarWording("A calendar entry with reminders is added."), "A calendar entry with reminders ready to add.");
+  assert.equal(calendarWording("I've added it to your calendar."), "it's ready to add to your calendar.");
+  assert.equal(calendarWording("Added them to your calendar."), "they're ready to add to your calendar.");
+  assert.equal(calendarWording("Mom's birthday reminders set."), "Mom's birthday reminders ready to add.");
+  assert.equal(calendarWording("Booked dinner and set up your reminders."), "Booked dinner and got your reminders ready to add.");
+  assert.equal(calendarWording("Table set for 4 at 20:00."), "Table set for 4 at 20:00.", "other uses of 'set' are left alone");
+  const events = [];
+  const state = freshState();
+  const out = JSON.parse((await execute("add_calendar_event", { errand_ref: "E1", title: "Dinner", start: plus(2) + "T20:00" }, state, (e) => events.push(e))).content);
+  assert.equal(out.ready_to_add, true);
+  assert.equal(out.added, undefined);
+  await execute("finish", { headline: "Calendar entry added.", errands: [{ ref: "E1", status: "scheduled", outcome: "Reminders set for Sunday." }] }, state, (e) => events.push(e));
+  const plan = events.find((e) => e.t === "plan").plan;
+  assert.equal(plan.headline, "Calendar entry ready to add.");
+  assert.equal(plan.errands[0].outcome, "Reminders ready to add for Sunday.");
 });
