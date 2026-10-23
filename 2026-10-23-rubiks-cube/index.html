@@ -96,6 +96,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .stage { position: relative; margin: 0 auto; width: min(100%, 360px); }
 #stage { width: 100%; aspect-ratio: 1; display: block; touch-action: pan-y; border-radius: 50%; background: var(--stage); cursor: grab; }
 .hint { position: absolute; right: 0; bottom: 4px; font-size: .72rem; color: var(--ink-soft); }
+/* shown while autoplay is paused; taps go straight through to the cube, which resumes it */
+.paused { position: absolute; left: 50%; top: 3%; transform: translateX(-50%); padding: 6px 12px; border-radius: 999px; background: var(--ink); color: var(--sheet); font-size: .8rem; font-weight: 600; white-space: nowrap; pointer-events: none; box-shadow: var(--shadow); }
+.paused[hidden] { display: none; }
 .ticker { text-align: center; min-height: 66px; padding: 2px 14px 0 46px; }
 #caption { font-weight: 600; font-size: .95rem; min-height: 1.5em; }
 #caption.low { color: var(--pencil); }
@@ -322,8 +325,9 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <div class="pin">
           <div class="stage-wrap">
             <div class="stage">
-              <canvas id="stage" role="img" aria-label="A Rubik’s Cube. Drag sideways to turn it."></canvas>
+              <canvas id="stage" role="img" aria-label="A Rubik’s Cube. Tap it to pause or resume the autoplay; drag sideways to turn it."></canvas>
               <span class="hint">drag to turn</span>
+              <span class="paused" id="paused" role="status" hidden>❚❚ Paused · tap to resume</span>
             </div>
           </div>
           <div class="ticker" aria-live="polite">

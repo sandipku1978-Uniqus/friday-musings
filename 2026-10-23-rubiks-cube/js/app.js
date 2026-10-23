@@ -96,6 +96,8 @@ function render() {
   $("#mode-step").setAttribute("aria-pressed", String(!S.auto));
   $("#i-pause").hidden = !S.running;
   $("#i-pause").textContent = S.paused ? "▶ Resume" : "❚❚ Pause";
+  $("#paused").hidden = !(S.running && S.paused);
+  $(".stage .hint").textContent = S.running ? "tap to pause · drag to turn" : "drag to turn";
   hint();
   $("#replay").disabled = S.playing || S.done === 0;
   counter(view.cube, S.cstep);
@@ -584,6 +586,8 @@ const placeTracker = () => {
 wide.addEventListener ? wide.addEventListener("change", placeTracker) : wide.addListener(placeTracker);
 placeTracker();
 $("#flip").addEventListener("click", () => view.lookAt(view.pitch > 0 ? VIEW_BOTTOM : VIEW_TOP));
+// Tapping the cube pauses autoplay and tapping it again resumes, like a video; a drag still turns it.
+view.onTap = () => { if (S.running) (S.paused ? resume() : pause()); };
 document.querySelectorAll(".dot").forEach((d) => d.addEventListener("click", () => restart(() => jump(+d.dataset.step))));
 $("#intermission-dot").addEventListener("click", () => restart(() => { jump(4); S.sawInterlude = false; interlude(true); }));
 ["kid", "cfo"].forEach((l) => $("#lens-" + l).addEventListener("click", () => { S.lens = l; store.set("rc-lens", l); render(); }));
