@@ -110,6 +110,15 @@ test("soundtrack: tension muffles the mix as finished work leaves its place", ()
   assert.ok(LEVEL > 0 && LEVEL < 1, "output trim stays below unity");
 });
 
+test("soundtrack: the first tap on a phone unlocks it (a touch pointerdown is not a gesture)", () => {
+  // Browsers only let audio start inside a user activation, and a touch grants one when the finger lifts.
+  // Listening to pointerdown alone made phones need a second tap (seen with real touch input in Chrome).
+  const events = read("js/app.js").match(/for \(const ev of (\[[^\]]+\])\) document\.addEventListener\(ev, unlockSound/);
+  assert.ok(events, "unlockSound is registered on a list of events");
+  const list = JSON.parse(events[1]);
+  for (const ev of ["pointerup", "touchend", "click", "keydown"]) assert.ok(list.includes(ev), `unlocks on ${ev}`);
+});
+
 test("close certificate: exact wording, initials cleaned, links to the live page", () => {
   const ws = STEPS.map((s) => s.ws);
   const f = certFacts({ total: 164, mode: "example", low7: 2, prot7: 16, workstreams: ws, mine: { tricks: 3, turns: 12 }, initials: "s.k9" });
