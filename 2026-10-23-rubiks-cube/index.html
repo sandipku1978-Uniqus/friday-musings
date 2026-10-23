@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Every Ledger Is Its Own Scramble</title>
+<meta property="og:type" content="article">
+<meta property="og:title" content="Every ledger is its own scramble">
+<meta property="og:description" content="Friday Musings: a Rubik's Cube tutorial for 8-year-olds turns out to be a close checklist. Scramble a cube, solve it in 7 steps, and watch what each recipe does to the work you already finished.">
+<meta property="og:url" content="https://friday-musings.vercel.app/2026-10-23-rubiks-cube/">
+<meta property="og:image" content="https://friday-musings.vercel.app/2026-10-23-rubiks-cube/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="Friday Musings by Sandip Khetan: solve a Rubik's Cube layer by layer and see the close, controls and audit sampling in every step. The kid tutorial video is included.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: an accountant's working paper. Cream columnar-pad ruling, a workpaper header with sign-off boxes,
+   red-pencil tickmarks, one workbench (cube, counter, step card) instead of a long simulator. */
+:root {
+  --paper: #FAF6EA;
+  --sheet: #FFFDF6;
+  --rule: #D7E6D6;
+  --rule-strong: #B4CDB3;
+  --margin: #E7A9A2;
+  --ink: #24272B;
+  --ink-soft: #545A60;
+  --ledger: #1D5A43;
+  --ledger-ink: #FFFFFF;
+  --pencil: #C3322B;
+  --pencil-wash: #F8E3DF;
+  --chip: #EFEADB;
+  --shadow: 0 1px 0 rgba(36, 39, 43, .06), 0 10px 30px -18px rgba(36, 39, 43, .35);
+  --stage: radial-gradient(circle at 50% 42%, #FFFFFF 0%, #F3EEDF 70%);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121614; --sheet: #18201C; --rule: #24332B; --rule-strong: #34493D; --margin: #6E3A36;
+    --ink: #ECE8DD; --ink-soft: #A9B0AA; --ledger: #7CCBA2; --ledger-ink: #0E1411; --pencil: #FF7B6E;
+    --pencil-wash: #3A2220; --chip: #222B26; --shadow: 0 10px 30px -18px rgba(0, 0, 0, .8);
+    --stage: radial-gradient(circle at 50% 42%, #26302A 0%, #18201C 70%);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121614; --sheet: #18201C; --rule: #24332B; --rule-strong: #34493D; --margin: #6E3A36;
+  --ink: #ECE8DD; --ink-soft: #A9B0AA; --ledger: #7CCBA2; --ledger-ink: #0E1411; --pencil: #FF7B6E;
+  --pencil-wash: #3A2220; --chip: #222B26; --shadow: 0 10px 30px -18px rgba(0, 0, 0, .8);
+  --stage: radial-gradient(circle at 50% 42%, #26302A 0%, #18201C 70%);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--ledger); }
+h1, h2, h3 { font-family: Fraunces, Georgia, serif; font-weight: 800; letter-spacing: -0.015em; line-height: 1.12; margin: 0; }
+.num, code, .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-weight: 600; }
+code { font-size: .92em; background: var(--chip); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.wrap { max-width: 1060px; margin: 0 auto; padding: 0 16px; }
+
+/* workpaper header */
+.wp { border-bottom: 2px solid var(--ink); background: var(--sheet); }
+.wp .wrap { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding-top: 10px; padding-bottom: 10px; font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; }
+.wp .ref { font-family: "IBM Plex Mono", monospace; font-weight: 600; border: 1.5px solid var(--ink); padding: 2px 8px; }
+.wp .signs { display: flex; gap: 12px; }
+.wp .sign { display: flex; gap: 6px; align-items: center; color: var(--ink-soft); }
+.wp .box { display: inline-grid; place-items: center; min-width: 30px; height: 20px; border-bottom: 1.5px solid var(--ink); color: var(--pencil); font-family: "IBM Plex Mono", monospace; font-weight: 600; text-transform: none; letter-spacing: 0; }
+#reviewed .box::before { content: "\00a0"; }
+#reviewed.on .box::before { content: "✓ you"; }
+.wp .mid { text-align: center; color: var(--ink-soft); }
+@media (max-width: 520px) { .wp .mid { display: none; } .wp .wrap { grid-template-columns: auto 1fr; } .wp .signs { justify-content: flex-end; } }
+
+/* hero */
+.hero { padding-top: 36px; padding-bottom: 18px; }
+.eyebrow { font-size: .74rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: var(--pencil); margin: 0 0 10px; }
+.hero h1 { font-size: clamp(2.15rem, 8.4vw, 3.6rem); max-width: 14ch; }
+.lede { font-size: 1.08rem; max-width: 60ch; margin: 16px 0 0; }
+.hook { display: grid; grid-template-columns: 88px 1fr; gap: 12px; align-items: center; margin-top: 18px; padding: 10px; max-width: 460px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 10px; text-decoration: none; color: var(--ink); box-shadow: var(--shadow); }
+.hook img { width: 88px; height: 88px; object-fit: cover; border-radius: 6px; display: block; }
+.hook b { display: block; }
+.hook span { color: var(--ink-soft); font-size: .9rem; }
+
+/* the workbench: a columnar pad */
+.bench { margin: 18px 0 8px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 4px; box-shadow: var(--shadow); position: relative;
+  background-image: linear-gradient(90deg, transparent 0 34px, var(--margin) 34px 35.5px, transparent 35.5px), repeating-linear-gradient(180deg, transparent 0 31px, var(--rule) 31px 32px); }
+.bench-grid { display: grid; gap: 0; }
+.bench-top { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; padding: 14px 14px 6px 46px; }
+.bench-top .lbl { font-weight: 600; font-size: .95rem; }
+.bench-top .note { display: block; color: var(--ink-soft); font-size: .8rem; font-weight: 500; }
+.chip { border: 1.5px solid var(--ink); background: var(--sheet); color: var(--ink); border-radius: 999px; padding: 6px 12px; font-size: .85rem; font-weight: 600; min-height: 36px; }
+.chip.ghost { border-color: var(--rule-strong); }
+.stage-wrap { padding: 0 14px 0 46px; }
+.stage { position: relative; margin: 0 auto; width: min(100%, 360px); }
+#stage { width: 100%; aspect-ratio: 1; display: block; touch-action: pan-y; border-radius: 50%; background: var(--stage); cursor: grab; }
+.hint { position: absolute; right: 0; bottom: 4px; font-size: .72rem; color: var(--ink-soft); }
+.ticker { text-align: center; min-height: 66px; padding: 2px 14px 0 46px; }
+#caption { font-weight: 600; font-size: .95rem; min-height: 1.5em; }
+.moveline { display: flex; justify-content: center; gap: 12px; align-items: baseline; }
+#move { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 1.05rem; color: var(--ledger); min-height: 1.5em; white-space: pre; }
+#count { font-size: .78rem; color: var(--ink-soft); }
+
+.counter { margin: 6px 14px 0 46px; padding: 10px 12px; border: 1.5px dashed var(--pencil); border-radius: 6px; background: color-mix(in srgb, var(--pencil-wash) 55%, transparent); }
+.counter-head { display: flex; justify-content: space-between; gap: 8px; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--pencil); }
+#ticks { display: flex; flex-wrap: wrap; gap: 3px; margin: 6px 0 4px; min-height: 22px; }
+.tick { width: 18px; height: 22px; display: grid; place-items: center; font-weight: 700; color: var(--ink-soft); font-family: "IBM Plex Mono", monospace; }
+.tick.ok { color: var(--pencil); transform: rotate(-6deg); }
+#low { font-size: .82rem; color: var(--ink-soft); }
+
+.dots { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 14px 14px 0 46px; flex-wrap: wrap; }
+.dot { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--rule-strong); background: var(--sheet); color: var(--ink-soft); font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: .85rem; padding: 0; }
+.dot.done { background: var(--ledger); border-color: var(--ledger); color: var(--ledger-ink); }
+.dot.now { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 3px var(--rule); }
+.star { border: 1.5px dashed var(--pencil); color: var(--pencil); background: var(--sheet); border-radius: 50%; width: 34px; height: 34px; padding: 0; font-size: .9rem; }
+
+.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 14px 0 46px; }
+.controls .primary { grid-column: 1 / -1; }
+.primary { background: var(--ledger); color: var(--ledger-ink); border: 0; border-radius: 8px; padding: 12px 14px; font-weight: 700; font-size: 1rem; min-height: 48px; }
+.primary:disabled { opacity: .55; cursor: progress; }
+.tool { border: 1.5px solid var(--rule-strong); background: var(--sheet); color: var(--ink); border-radius: 8px; min-height: 44px; padding: 0 8px; font-weight: 600; font-size: .9rem; }
+.tool:disabled { opacity: .45; }
+
+.card { margin: 16px 14px 16px 46px; padding: 16px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 8px; }
+.lens { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; margin-bottom: 12px; }
+.lens button { border: 0; background: transparent; color: var(--ink); padding: 6px 14px; font-weight: 600; font-size: .85rem; min-height: 36px; }
+.lens button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+#step-no { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--ink-soft); }
+#step-title { font-size: 1.6rem; margin: 2px 0 8px; }
+#step-head { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 1.12rem; margin: 0 0 6px; color: var(--ledger); }
+#step-body { margin: 0 0 10px; }
+#step-recipe, #step-tip { margin: 6px 0 0; font-size: .9rem; color: var(--ink-soft); }
+#step-result { margin: 12px 0 0; color: var(--ledger); font-weight: 700; }
+
+.intermission { border-color: var(--pencil); }
+.intermission .counter, .intermission .dots, .intermission .controls, .intermission .ticker, .intermission #scramble, .intermission #example { display: none; }
+#interlude { margin: 16px 14px 16px 46px; padding: 16px; border: 2px solid var(--ink); border-radius: 8px; background: var(--sheet); }
+#interlude .eyebrow { margin-bottom: 6px; }
+#i-title { font-size: 1.4rem; margin-bottom: 8px; }
+#i-body p { margin: 8px 0; }
+.i-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; align-items: center; }
+.linkish { background: none; border: 0; color: var(--ink-soft); text-decoration: underline; padding: 8px 4px; }
+
+@media (max-width: 599px) {
+  .bench { background-image: linear-gradient(90deg, transparent 0 18px, var(--margin) 18px 19.5px, transparent 19.5px), repeating-linear-gradient(180deg, transparent 0 31px, var(--rule) 31px 32px); }
+  .bench-top, .stage-wrap, .ticker { padding-left: 28px; }
+  .counter, .dots, .controls, .card, #interlude { margin-left: 28px; margin-right: 10px; }
+  .bench-top { padding-right: 10px; } .stage-wrap { padding-right: 10px; }
+}
+@media (min-width: 900px) {
+  .bench-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; }
+  .bench-side { padding-top: 14px; }
+  .card, #interlude { margin-left: 14px; margin-top: 0; }
+}
+
+/* sections */
+section.sheet { padding: 40px 0 8px; }
+section.sheet h2 { font-size: clamp(1.6rem, 5.6vw, 2.3rem); max-width: 22ch; }
+.kicker { color: var(--ink-soft); max-width: 62ch; margin: 10px 0 0; }
+.notes { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 0; border-top: 2px solid var(--ink); }
+.notes li { display: grid; grid-template-columns: 44px 1fr; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--rule-strong); }
+.notes .tm { font-family: "IBM Plex Mono", monospace; font-weight: 600; color: var(--pencil); font-size: 1.05rem; }
+.notes b { display: block; font-family: Fraunces, Georgia, serif; font-size: 1.15rem; margin-bottom: 2px; }
+@media (min-width: 760px) { .notes { grid-template-columns: 1fr 1fr; column-gap: 32px; } }
+
+.checks { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 8px; }
+.checks li { position: relative; }
+.checks input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.checks label { display: grid; grid-template-columns: 30px 1fr; column-gap: 10px; padding: 12px; border: 1px solid var(--rule-strong); border-radius: 8px; background: var(--sheet); cursor: pointer; min-height: 48px; }
+.checks label::before { content: ""; grid-row: span 2; width: 26px; height: 26px; border: 1.5px solid var(--ink); border-radius: 4px; display: grid; place-items: center; font-family: "IBM Plex Mono", monospace; font-weight: 700; color: var(--pencil); font-size: 1.1rem; }
+.checks input:checked + label::before { content: "✓"; }
+.checks input:checked + label { border-color: var(--pencil); }
+.checks input:focus-visible + label { outline: 3px solid var(--pencil); outline-offset: 2px; }
+.ck-step { display: block; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--ink-soft); }
+.scorebar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin-top: 14px; padding: 14px 0; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+#score { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 1.4rem; color: var(--pencil); }
+
+.gift { display: grid; gap: 22px; margin-top: 20px; }
+.gift video { width: 100%; height: auto; max-width: 540px; aspect-ratio: 1; display: block; border-radius: 8px; background: #F2F0EA; border: 1px solid var(--rule-strong); }
+.gift ol { padding-left: 0; list-style: none; margin: 0; display: grid; gap: 10px; }
+.gift li { padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+.recipe { display: block; color: var(--ink-soft); font-size: .9rem; margin-top: 2px; }
+.rule-box { border: 2px solid var(--ink); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; background: var(--sheet); }
+@media (min-width: 900px) { .gift { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+
+footer { margin-top: 48px; border-top: 2px solid var(--ink); padding: 18px 0 40px; font-size: .85rem; color: var(--ink-soft); }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<header class="wp">
+  <div class="wrap">
+    <span class="ref">W/P RC-7</span>
+    <span class="mid">Friday Musings · The close, layer by layer</span>
+    <span class="signs">
+      <span class="sign">Prepared <span class="box">SK</span></span>
+      <span class="sign" id="reviewed">Reviewed <span class="box" aria-live="polite"></span></span>
+    </span>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <p class="eyebrow">#FridayMusings · Sandip Khetan</p>
+    <h1>Every ledger is its own scramble.</h1>
+    <p class="lede">I made a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist. Solve the cube below, one step at a time, and keep an eye on the red pencil. It counts the work you already finished, and every recipe disturbs it on purpose before handing it back.</p>
+    <a class="hook" href="#gift">
+      <img src="poster.jpg" alt="Title card of the kid tutorial: Solve a Rubik’s Cube" width="88" height="88">
+      <span><b>The kid version is at the end</b><span>Video, 1 min 42 s, age 8 and up. It’s the reason this page exists.</span></span>
+    </a>
+  </div>
+
+  <div class="wrap">
+    <div class="bench" id="bench" aria-label="Rubik’s Cube workbench">
+      <div class="bench-grid">
+        <div class="bench-main">
+          <div class="bench-top">
+            <span class="lbl"><span id="cube-label">Example cube. Yours may look different.</span><span class="note" id="scramble-note"></span></span>
+            <span style="display:flex;gap:8px">
+              <button class="chip" id="scramble" type="button">Scramble mine</button>
+              <button class="chip ghost" id="example" type="button">Example</button>
+            </span>
+          </div>
+          <div class="stage-wrap">
+            <div class="stage">
+              <canvas id="stage" role="img" aria-label="A Rubik’s Cube. Drag sideways to turn it."></canvas>
+              <span class="hint">drag to turn</span>
+            </div>
+          </div>
+          <div class="ticker" aria-live="polite">
+            <div id="caption"></div>
+            <div class="moveline"><span id="move"></span><span id="count"></span></div>
+          </div>
+          <div class="counter">
+            <div class="counter-head"><span>Finished work intact</span><span id="intact" class="mono"></span></div>
+            <div id="ticks" aria-hidden="true"></div>
+            <div id="low"></div>
+          </div>
+          <nav class="dots" aria-label="Steps">
+            <button class="dot" type="button" data-step="1" aria-label="Step 1">1</button>
+            <button class="dot" type="button" data-step="2" aria-label="Step 2">2</button>
+            <button class="dot" type="button" data-step="3" aria-label="Step 3">3</button>
+            <button class="star" type="button" id="intermission-dot" aria-label="Intermission: who scrambled it?" title="Intermission">★</button>
+            <button class="dot" type="button" data-step="4" aria-label="Step 4">4</button>
+            <button class="dot" type="button" data-step="5" aria-label="Step 5">5</button>
+            <button class="dot" type="button" data-step="6" aria-label="Step 6">6</button>
+            <button class="dot" type="button" data-step="7" aria-label="Step 7">7</button>
+          </nav>
+          <div class="controls">
+            <button class="primary" id="next" type="button">Show me step 1</button>
+            <button class="tool" id="replay" type="button">↺ Replay</button>
+            <button class="tool" id="speed" type="button" aria-pressed="false">Speed 1×</button>
+            <button class="tool" id="flip" type="button">⇅ Flip</button>
+          </div>
+        </div>
+        <div class="bench-side">
+          <div id="steps-ui">
+            <article class="card" aria-live="polite">
+              <div class="lens" role="group" aria-label="Who is reading">
+                <button type="button" id="lens-kid" aria-pressed="false">For kids</button>
+                <button type="button" id="lens-cfo" aria-pressed="true">For the CFO</button>
+              </div>
+              <div id="step-no"></div>
+              <h3 id="step-title"></h3>
+              <p id="step-head"></p>
+              <p id="step-body"></p>
+              <p id="step-recipe"></p>
+              <p id="step-tip"></p>
+              <p id="step-result" hidden></p>
+            </article>
+          </div>
+          <div id="interlude" hidden aria-live="polite">
+            <p class="eyebrow">Intermission · Are you watching closely?</p>
+            <h3 id="i-title"></h3>
+            <div id="i-body"></div>
+            <div class="i-actions">
+              <button class="primary" id="i-next" type="button"></button>
+              <button class="linkish" id="i-skip" type="button">Skip to step 4</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="sheet">
+    <div class="wrap">
+      <p class="eyebrow">Review notes</p>
+      <h2>Five things the cube tells a finance team</h2>
+      <ol class="notes">
+        <li><span class="tm">✓1</span><div><b>Layers, in order.</b>You can’t do step 5 before step 2. A close runs the same way: cash, subledgers, intercompany, then the top-side work. Skipping ahead feels fast and ends in a reopened period.</div></li>
+        <li><span class="tm">✓2</span><div><b>Protect what’s already solved.</b>Every recipe lifts finished work on purpose and puts it back. That’s change management: when you touch a control, re-test the ones next to it. The red counter is a regression test you can watch.</div></li>
+        <li><span class="tm">✓3</span><div><b>Trust the mess in the middle.</b>Step 7 makes the finished white side look broken, then fixes it. Every controller who has cleared a suspense account knows that week. Finish the recipe; don’t stop at the ugly part.</div></li>
+        <li><span class="tm">✓4</span><div><b>A recipe beats talent.</b>The four-turn magic trick does the work in step 2, sits inside step 4, and comes back on the bottom in step 7. A good control is a recipe a new hire can run, not a gift you hope stays with the company.</div></li>
+        <li><span class="tm">✓5</span><div><b>Repeatable beats optimal.</b>A computer can solve any position in 20 moves or fewer. People use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams, and for the auditors who have to follow them.</div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sheet">
+    <div class="wrap">
+      <p class="eyebrow">Take it to your close</p>
+      <h2>Which layers does your close already protect?</h2>
+      <p class="kicker">One line per step, plus the intermission. Tick what is true at your company. Nothing leaves this page; your ticks stay in this browser.</p>
+      <ul class="checks" id="checks"></ul>
+      <div class="scorebar"><span id="score">0 of 8</span><span id="verdict"></span></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="gift">
+    <div class="wrap">
+      <p class="eyebrow">The gift</p>
+      <h2>Now hand the phone to someone who is 8.</h2>
+      <p class="kicker">The original tutorial: one method, seven steps, a robot hand on every turn, and an original soundtrack. The words say where the FRONT squares go.</p>
+      <div class="gift">
+        <div>
+          <video controls playsinline preload="none" poster="poster.jpg" width="540" height="540">
+            <source src="output/rubiks_cube_7_steps.mp4" type="video/mp4">
+          </video>
+          <p><a href="output/rubiks_cube_7_steps.mp4" download>Download the video (MP4)</a></p>
+        </div>
+        <div>
+          <div class="rule-box"><b>Golden rule:</b> keep yellow on top the whole time. <br><b>The magic trick:</b> <span id="trick-words"></span>. Say it out loud!</div>
+          <ol id="kid-steps"></ol>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>#FridayMusings · Sandip Khetan · Personal views, not advice.</span>
+    <span><a href="../">More Friday Musings</a> · <a href="https://www.uniqus.com">uniqus.com</a></span>
+  </div>
+</footer>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
