@@ -57,6 +57,10 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - The solver never uses back-face moves and only spins with `y`, like the video. The intermission ("Are you
   watching closely?") sits between steps 3 and 4.
 - The video loads only when tapped (`preload="none"`); it is 12.6 MB.
+- Autoplay is the default (step by step is one tap away, and the default under prefers-reduced-motion): it starts
+  when the cube is well in view, runs every step and the intermission with reading pauses, and waits while the cube
+  is fully off screen. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible while
+  the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a gesture).
 
 ## Rules the video follows (keep these)
 

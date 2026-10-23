@@ -26,7 +26,7 @@ I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in o
 
 → Repeatable beats optimal. A computer can solve any position in 20 moves or fewer. Teams use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams.
 
-The interactive version: scramble a cube (yours will look different, like every company’s ledger), solve it one step at a time with the soundtrack on, and watch a close tracker sign off one workstream per step: cash, subledgers, intercompany, all the way to sign-off. When a recipe disturbs finished work, those workstreams flip to re-testing until it is handed back. Every step has a kid view and a CFO view, and there is an intermission on staged demos.
+The interactive version: scramble a cube (yours will look different, like every company’s ledger), let it solve itself step by step with the soundtrack on (or take it one step at a time), and watch a close tracker sign off one workstream per step: cash, subledgers, intercompany, all the way to sign-off. When a recipe disturbs finished work, those workstreams flip to re-testing until it is handed back. Every step has a kid view and a CFO view, and there is an intermission on staged demos.
 
 https://friday-musings.vercel.app/2026-10-23-rubiks-cube/
 

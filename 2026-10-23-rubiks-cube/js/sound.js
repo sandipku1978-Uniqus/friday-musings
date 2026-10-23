@@ -22,9 +22,10 @@ const hz = (m) => 440 * 2 ** ((m - 69) / 12);
 export class Sound {
   constructor(on = true) { this.on = on; this.ctx = null; this.playing = false; this.timer = null; }
 
-  // Must be called from a tap/click: browsers only allow audio after a gesture.
-  unlock() {
-    if (!this.on) return false;
+  // Audio starts only after a gesture: the page calls unlock(true) on the first tap or key press.
+  // Before that, every sound is skipped silently (autoplay keeps moving without sound).
+  unlock(fromGesture = false) {
+    if (!this.on || (!this.ctx && !fromGesture)) return false;
     try {
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -45,11 +46,14 @@ export class Sound {
     } catch { return false; }
   }
 
+  get live() { return !!this.ctx && this.on && this.ctx.state === "running"; }
+  ready() { return this.unlock() && this.ctx.state === "running"; }
+
   setOn(on) { this.on = on; if (!on) this.stopMusic(0.15); }
 
   // ---- music loop ----------------------------------------------------------------------------
   startMusic() {
-    if (!this.unlock() || this.playing) return;
+    if (!this.ready() || this.playing) return;
     const t = this.ctx.currentTime;
     this.playing = true;
     this.bar = 0;
@@ -90,11 +94,11 @@ export class Sound {
   }
 
   // ---- effects -------------------------------------------------------------------------------
-  click() { if (this.unlock()) { const t = this.ctx.currentTime; this.noiseHit(t, 1800, 6500, 0.007, 0.22); this.tone(340, t, 0.012, 0.13, "sine"); } }
-  tick() { if (this.unlock()) { const t = this.ctx.currentTime; this.noiseHit(t, 2500, 9000, 0.02, 0.18); this.tone(1320, t, 0.05, 0.06, "triangle"); } }
-  chime() { if (this.unlock()) { const t = this.ctx.currentTime; this.bell(hz(84), t, 1, 0.4, 0.16); this.bell(hz(91), t + 0.09, 1.2, 0.5, 0.16); } }
-  retest() { if (this.unlock()) { const t = this.ctx.currentTime; this.tone(hz(55), t, 0.18, 0.12, "triangle"); } }
-  fanfare() { if (this.unlock()) { const t = this.ctx.currentTime; [72, 76, 79, 84].forEach((m, i) => this.bell(hz(m + 12), t + 0.2 + i * 0.1, 1.6, 0.6, 0.12)); } }
+  click() { if (this.ready()) { const t = this.ctx.currentTime; this.noiseHit(t, 1800, 6500, 0.007, 0.22); this.tone(340, t, 0.012, 0.13, "sine"); } }
+  tick() { if (this.ready()) { const t = this.ctx.currentTime; this.noiseHit(t, 2500, 9000, 0.02, 0.18); this.tone(1320, t, 0.05, 0.06, "triangle"); } }
+  chime() { if (this.ready()) { const t = this.ctx.currentTime; this.bell(hz(84), t, 1, 0.4, 0.16); this.bell(hz(91), t + 0.09, 1.2, 0.5, 0.16); } }
+  retest() { if (this.ready()) { const t = this.ctx.currentTime; this.tone(hz(55), t, 0.18, 0.12, "triangle"); } }
+  fanfare() { if (this.ready()) { const t = this.ctx.currentTime; [72, 76, 79, 84].forEach((m, i) => this.bell(hz(m + 12), t + 0.2 + i * 0.1, 1.6, 0.6, 0.12)); } }
 
   // ---- instruments (music.py, translated) --------------------------------------------------
   out(dest) { return dest || this.master; }

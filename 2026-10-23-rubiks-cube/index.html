@@ -143,6 +143,14 @@ button { font: inherit; cursor: pointer; }
 .dot.now { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 3px var(--rule); }
 .star { border: 1.5px dashed var(--pencil); color: var(--pencil); background: var(--sheet); border-radius: 50%; width: 34px; height: 34px; padding: 0; font-size: .9rem; }
 
+.mode { display: flex; justify-content: center; margin: 12px 14px 0 46px; }
+.mode button { border: 1.5px solid var(--ink); background: var(--sheet); color: var(--ink); padding: 6px 14px; font-weight: 600; font-size: .85rem; min-height: 36px; }
+.mode button:first-child { border-radius: 999px 0 0 999px; border-right: 0; }
+.mode button:last-child { border-radius: 0 999px 999px 0; }
+.mode button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+#sound-hint { display: inline-block; margin-top: 4px; font-size: .8rem; font-weight: 600; color: var(--pencil); animation: breathe 1.6s ease-in-out infinite alternate; }
+#sound-hint[hidden] { display: none; }
+@keyframes breathe { from { opacity: .55; } to { opacity: 1; } }
 .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 14px 0 46px; }
 .controls .primary { grid-column: 1 / -1; }
 .primary { background: var(--ledger); color: var(--ledger-ink); border: 0; border-radius: 8px; padding: 12px 14px; font-weight: 700; font-size: 1rem; min-height: 48px; }
@@ -162,7 +170,7 @@ button { font: inherit; cursor: pointer; }
 #step-result { margin: 12px 0 0; color: var(--ledger); font-weight: 700; }
 
 .intermission { border-color: var(--pencil); }
-.intermission .counter, .intermission .dots, .intermission .controls, .intermission .ticker, .intermission #scramble, .intermission #example { display: none; }
+.intermission .counter, .intermission .dots, .intermission .controls, .intermission .mode, .intermission .ticker, .intermission #scramble, .intermission #example { display: none; }
 #interlude { margin: 16px 14px 16px 46px; padding: 16px; border: 2px solid var(--ink); border-radius: 8px; background: var(--sheet); }
 #interlude .eyebrow { margin-bottom: 6px; }
 #i-title { font-size: 1.4rem; margin-bottom: 8px; }
@@ -173,8 +181,16 @@ button { font: inherit; cursor: pointer; }
 @media (max-width: 599px) {
   .bench { background-image: linear-gradient(90deg, transparent 0 18px, var(--margin) 18px 19.5px, transparent 19.5px), repeating-linear-gradient(180deg, transparent 0 31px, var(--rule) 31px 32px); }
   .bench-top, .stage-wrap, .ticker { padding-left: 28px; }
-  .counter, .dots, .controls, .card, #interlude { margin-left: 28px; margin-right: 10px; }
+  .counter, .dots, .mode, .controls, .card, #interlude { margin-left: 28px; margin-right: 10px; }
   .bench-top { padding-right: 10px; } .stage-wrap { padding-right: 10px; }
+}
+/* Phones: the cube and its caption stay pinned at the top while the tracker and buttons scroll under it. */
+@media (max-width: 899px) {
+  .bench-main, .bench-side { display: contents; }
+  .pin { align-self: start; position: sticky; top: 0; z-index: 3; background: var(--sheet); border-bottom: 1.5px dashed var(--rule-strong); padding-bottom: 4px; }
+  .pin .stage { width: min(100%, 240px); }
+  .pin .hint { display: none; }
+  .pin .ticker { min-height: 58px; }
 }
 @media (min-width: 900px) {
   .bench-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: start; }
@@ -233,7 +249,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <div class="wrap hero">
     <p class="eyebrow">#FridayMusings · Sandip Khetan</p>
     <h1>Every ledger is its own scramble.</h1>
-    <p class="lede">I made a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist. Solve the cube below, one step at a time, with the sound on. The close tracker beside it signs off one workstream per step in red pencil, and every recipe reopens finished work on purpose before handing it back.</p>
+    <p class="lede">I made a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist. The cube below solves itself, one step at a time; tap anywhere for the soundtrack, or switch to step by step. The close tracker beside it signs off one workstream per step in red pencil, and every recipe reopens finished work on purpose before handing it back.</p>
     <a class="hook" href="#gift">
       <img src="poster.jpg" alt="Title card of the kid tutorial: Solve a Rubik’s Cube" width="88" height="88">
       <span><b>The kid version is at the end</b><span>Video, 1 min 42 s, age 8 and up. It’s the reason this page exists.</span></span>
@@ -251,6 +267,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
               <button class="chip ghost" id="example" type="button">Example</button>
             </span>
           </div>
+          <div class="pin">
           <div class="stage-wrap">
             <div class="stage">
               <canvas id="stage" role="img" aria-label="A Rubik’s Cube. Drag sideways to turn it."></canvas>
@@ -260,6 +277,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <div class="ticker" aria-live="polite">
             <div id="caption"></div>
             <div class="moveline"><span id="move"></span><span id="count"></span></div>
+            <div id="sound-hint" hidden>♪ Tap anywhere for the soundtrack</div>
+          </div>
           </div>
           <section class="counter" id="tracker" aria-label="Close tracker">
             <div class="counter-head"><span>Close tracker</span><span id="tr-sum" class="mono"></span></div>
@@ -279,6 +298,10 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <button class="dot" type="button" data-step="6" aria-label="Step 6">6</button>
             <button class="dot" type="button" data-step="7" aria-label="Step 7">7</button>
           </nav>
+          <div class="mode" role="group" aria-label="Play mode">
+            <button type="button" id="mode-auto" aria-pressed="true">▶ Autoplay</button>
+            <button type="button" id="mode-step" aria-pressed="false">Step by step</button>
+          </div>
           <div class="controls">
             <button class="primary" id="next" type="button">Show me step 1</button>
             <button class="tool" id="replay" type="button">↺ Replay</button>
@@ -309,6 +332,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <div id="i-body"></div>
             <div class="i-actions">
               <button class="primary" id="i-next" type="button"></button>
+              <button class="tool" id="i-pause" type="button" hidden>❚❚ Pause</button>
               <button class="linkish" id="i-skip" type="button">Skip to step 4</button>
             </div>
           </div>

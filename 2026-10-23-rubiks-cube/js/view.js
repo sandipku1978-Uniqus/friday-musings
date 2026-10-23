@@ -51,9 +51,11 @@ export class CubeView {
   cancel() { this.token++; this.turning = null; this.draw(); }
 
   // Plays moves one by one; onMove(i, move) fires after each move lands on the cube.
-  async play(moves, { ms = 260, onMove = () => {} } = {}) {
+  // `gate` (optional) is awaited before each move, so autoplay can pause between turns.
+  async play(moves, { ms = 260, onMove = () => {}, gate = null } = {}) {
     const my = ++this.token;
     for (let i = 0; i < moves.length; i++) {
+      if (gate) await gate();
       if (my !== this.token) return false;
       const m = moves[i], dur = reduced() ? 0 : ms * (m.endsWith("2") ? 1.45 : 1);
       if (dur > 0) {
