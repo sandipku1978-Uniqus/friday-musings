@@ -1,6 +1,6 @@
 // GET /api/poll → the Rubik's Cube musing's "Peer review" tallies. POST /api/poll {q, a} → count one answer and
-// return that question's tally. Needs the shared store (Vercel KV / Upstash): without it the poll reports
-// enabled: false and the page keeps the section hidden. Only counts are stored (one Redis hash per question,
+// return that question's tally. Needs POLL.on (js/poll.js) and the shared store (Vercel KV / Upstash): without
+// either, the poll reports enabled: false, counts nothing, and the page keeps the section hidden. Only counts are stored (one Redis hash per question,
 // one field per answer); nothing identifies a reader, and answers are checked against the page's own question list.
 
 import { POLL, validAnswer } from "../2026-10-23-rubiks-cube/js/poll.js";
@@ -16,7 +16,7 @@ const toCounts = (flat) => {
 export default async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
   const send = (code, body, cache = "no-store") => { res.statusCode = code; res.setHeader("Cache-Control", cache); res.end(JSON.stringify(body)); };
-  if (!kvConfigured) return send(200, { enabled: false });
+  if (!POLL.on || !kvConfigured) return send(200, { enabled: false });
 
   if (req.method === "GET") {
     const out = await kvPipeline(POLL.questions.map((q) => ["HGETALL", key(q.id)]));

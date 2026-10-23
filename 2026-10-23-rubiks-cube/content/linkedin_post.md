@@ -26,7 +26,7 @@ I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in o
 
 → Repeatable beats optimal. A computer can solve any position in 20 moves or fewer. Teams use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams.
 
-The interactive version: scramble your own cube, run the magic trick yourself at step 2, and watch a close tracker sign off one workstream per step. A finished close signs you a certificate, and three anonymous questions show how your close compares with the room.
+The interactive version: scramble your own cube, run the magic trick yourself at step 2, and watch a close tracker sign off one workstream per step. A finished close signs you a certificate to share.
 
 https://friday-musings.vercel.app/2026-10-23-rubiks-cube/
 

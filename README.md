@@ -10,7 +10,7 @@ Interactive essays by Sandip Khetan, Co-Founder, Uniqus Consultech.
 
 ## What's here
 
-- **`2026-10-23-rubiks-cube/`**: the musing. Static page with a playable cube that solves any scramble in the kid tutorial's 7 steps, a kid view and a CFO view per step, a counter for finished work, an intermission on staged demos, and a close self-check, a "Your turn" magic trick, a shareable close certificate, and a three-question anonymous peer poll (`/api/poll`, shown only when the KV store below is connected). The kid tutorial video and its Python build pipeline live in the same folder (see its `CLAUDE.md`).
+- **`2026-10-23-rubiks-cube/`**: the musing. Static page with a playable cube that solves any scramble in the kid tutorial's 7 steps, a kid view and a CFO view per step, a counter for finished work, an intermission on staged demos, and a close self-check, a "Your turn" magic trick, a shareable close certificate, and a three-question anonymous peer poll (`/api/poll`; off for the launch via `POLL.on` in `js/poll.js`, and it also needs the KV store below). The kid tutorial video and its Python build pipeline live in the same folder (see its `CLAUDE.md`).
 - **`2026-10-03-who-picks-up/`**: the musing. Static page with a scripted concierge simulator, the controller's view, six bets, and an agent-readiness check.
 - **`concierge/`**: a live AI concierge (Claude Sonnet 5.5). Visitors type everyday errands. It books with demo businesses that run agent gateways, creates calendar entries and drafts messages, all inside a mandate the visitor sets.
 - **`/gateway/*` and `/.well-known/agent-card.json`**: five fictional businesses (restaurant, clinic, home services, insurer, gym) that answer AI agents. Any agent can call them, and receipts are Ed25519-signed.
@@ -50,7 +50,7 @@ browser ──POST /api/concierge──▶ agent loop (lib/agent.js) ──▶ C
 2. **Set environment variables** (Settings → Environment Variables, Production):
    - `ANTHROPIC_API_KEY`: a key from console.anthropic.com. Put it in its own workspace with a **monthly spend limit**; this is the real backstop.
    - `RECEIPT_SECRET`: a random string, e.g. the output of `openssl rand -hex 32`. In production the concierge refuses to run without it.
-   - Recommended before posting widely: Storage → add an **Upstash Redis (KV)** store to the project. That sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`, so rate limits are shared across instances. The Rubik's Cube musing's peer poll needs it too: without it, the poll stays hidden.
+   - Recommended before posting widely: Storage → add an **Upstash Redis (KV)** store to the project. That sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`, so rate limits are shared across instances. The Rubik's Cube musing's peer poll also needs it, but connecting the store does not switch the poll on: it stays off until `POLL.on` is set.
 3. **Deploy.** If the project name isn't `friday-musings`, update the `https://friday-musings.vercel.app/...` URLs in the `og:` meta tags and in the LinkedIn post text inside the musing.
 4. **Check:** open `/concierge/`, run the Mumbai example, approve, then press "Verify signature" on a receipt.
 
