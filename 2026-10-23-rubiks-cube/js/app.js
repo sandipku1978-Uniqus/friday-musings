@@ -1,7 +1,8 @@
 // Page wiring: the workbench (cube + 7 steps + red-pencil counter), the intermission, and the close checklist.
-import { Cube, solve, randomScramble, intactCount, piecesHome, PROTECTED, turnCount, invert, parse, WORDS } from "./cube.js";
+import { Cube, solve, randomScramble, intactCount, piecesHome, PROTECTED, turnCount, invert, parse, WORDS, D_EDGES, D_CORNERS, MID_EDGES, U_EDGES } from "./cube.js";
 import { CubeView, VIEW_TOP, VIEW_BOTTOM } from "./view.js";
 import { STEPS, CHECKS, words } from "./steps.js";
+import { Sound } from "./sound.js";
 
 const $ = (s) => document.querySelector(s);
 const EXAMPLE = "L2 R U2 B F' B' U R F R2 L2 D' L D' R' D' R F' R F' U' L R2 L B2";
@@ -11,7 +12,10 @@ const store = {
 };
 
 const view = new CubeView($("#stage"));
-const S = { mode: "example", snaps: [], segs: [], done: 0, playing: false, fast: false, lens: store.get("rc-lens") || "cfo", low: null, cstep: 1, total: 0 };
+const sound = new Sound(store.get("rc-sound") !== "off");
+// Cube pieces each workstream owns: when a recipe disturbs them, that workstream is re-testing.
+const OWNS = { 1: D_EDGES, 2: D_CORNERS, 3: MID_EDGES, 5: U_EDGES };
+const S = { mode: "example", snaps: [], segs: [], done: 0, playing: false, fast: false, lens: store.get("rc-lens") || "cfo", low: null, cstep: 1, tasks: 0, total: 0 };
 
 function load(scramble, mode) {
   view.cancel();
@@ -23,7 +27,7 @@ function load(scramble, mode) {
     segs.filter((s) => s.step === k).forEach((s) => c.applySeq(s.moves));
     snaps[k + 1] = c;
   }
-  Object.assign(S, { mode, segs, snaps, done: 0, playing: false, low: null, cstep: 1, total: turnCount(segs.flatMap((s) => s.moves)) });
+  Object.assign(S, { mode, segs, snaps, done: 0, playing: false, low: null, cstep: 1, tasks: 0, total: turnCount(segs.flatMap((s) => s.moves)) });
   view.setCube(snaps[1].copy());
   view.lookAt(VIEW_TOP, 400);
   S.note = mode === "example" ? "" : `Scrambled with ${parse(scramble).length} random turns.`;
@@ -55,7 +59,28 @@ function render() {
   card(solved ? 7 : k, solved || (S.done >= k));
 }
 
+// The close tracker: one workstream per step, four tasks that tick as the step plays,
+// and signed-off workstreams that flip to re-testing while a recipe disturbs their pieces.
 function counter(c, k) {
+  const list = $("#ws-list");
+  list.innerHTML = "";
+  let signed = 0, retesting = [];
+  STEPS.forEach((s, i) => {
+    const w = i + 1, li = document.createElement("li");
+    const isSigned = w <= S.done && !(S.playing && w === k);
+    const retest = isSigned && w < k && OWNS[w] && (w !== 5 || S.done >= 5) && !OWNS[w].every((p) => c.pieceSolved(p));
+    if (isSigned && !retest) signed++;
+    if (retest) retesting.push(s.ws);
+    li.className = "ws" + (retest ? " retest" : isSigned ? " signed" : w === k ? " active" : "");
+    li.innerHTML = `<span class="ws-n">${retest ? "⟳" : isSigned ? "✓" : w}</span>${s.ws}`;
+    list.append(li);
+  });
+  $("#tr-sum").textContent = `${signed} of 7 signed off`;
+  const s = STEPS[k - 1], finished = S.done >= k && !S.playing, n0 = finished ? 4 : S.tasks;
+  $("#ws-active").innerHTML = `<div class="ws-title"><span>${k}. ${s.ws}</span><span class="mono">${finished ? "Signed off ✓" : `${n0} of 4`}</span></div>` +
+    s.tasks.map((t, i) => `<div class="task${i < n0 ? " done" : ""}${S.justTicked === i ? " just" : ""}"><span class="box"></span><span>${t}</span></div>`).join("") +
+    (retesting.length ? `<div class="retest-note">Re-testing: ${retesting.join(", ")}</div>` : "");
+  S.justTicked = null;
   const n = PROTECTED[k].length, ok = intactCount(c, k);
   const box = $("#ticks");
   box.innerHTML = "";
@@ -94,7 +119,8 @@ function ticker(seg, m, i, n) {
 
 async function playStep(k) {
   if (S.playing) return;
-  S.playing = true; S.low = null; S.cstep = k;
+  S.playing = true; S.low = null; S.cstep = k; S.tasks = 0;
+  sound.startMusic();
   view.setCube(S.snaps[k].copy());
   S.done = k - 1;
   render();
@@ -107,17 +133,22 @@ async function playStep(k) {
     const ok = await view.play(seg.moves, {
       ms,
       onMove: (_, m) => {
-        if (m[0] !== "y") done++;
+        if (m[0] !== "y") { done++; sound.click(); }
+        const t = done >= n ? 4 : Math.min(3, Math.floor((4 * done) / Math.max(n, 1)));
+        if (t > S.tasks) { S.tasks = t; S.justTicked = t - 1; sound.tick(); }
         ticker(seg, m, done, n);
         const now = intactCount(view.cube, k);
         S.low = S.low === null ? now : Math.min(S.low, now);
         counter(view.cube, k);
       },
     });
-    if (!ok) { S.playing = false; return; }
+    if (!ok) { S.playing = false; sound.stopMusic(0.3); return; }
   }
   S.playing = false;
   S.done = k;
+  S.tasks = 4;
+  sound.stopMusic();
+  if (k < 7) sound.chime();
   ticker(null, "", 0, 0);
   $("#caption").textContent = `✓ ${STEPS[k - 1].result}`;
   if (k <= 2) { $("#caption").textContent += " (bottom view)"; view.lookAt(VIEW_BOTTOM); }
@@ -126,13 +157,15 @@ async function playStep(k) {
 }
 
 function finale() {
+  sound.fanfare();
   $("#reviewed").classList.add("on");
   $("#caption").textContent = `✓ Solved in ${S.total} turns. A computer needs 20 or fewer.`;
 }
 
 function jump(k) {
   view.cancel();
-  S.playing = false; S.low = null; S.cstep = k;
+  S.playing = false; S.low = null; S.cstep = k; S.tasks = 0;
+  sound.stopMusic(0.3);
   S.done = k - 1;
   view.setCube(S.snaps[k].copy());
   view.lookAt(VIEW_TOP, 400);
@@ -179,9 +212,14 @@ async function interludeNext() {
   const btn = $("#i-next");
   btn.disabled = true;
   const solve3 = invert(I.scramble).split(" ");
-  if (I.stage === 0) await view.play(solve3, { ms: 650 });
-  if (I.stage === 2) await view.play(randomScramble(25), { ms: 70 });
-  if (I.stage === 3) await view.play(solve3, { ms: 650 });
+  const clicks = { onMove: () => sound.click() };
+  if (I.stage === 0 || I.stage === 2 || I.stage === 3) sound.startMusic();
+  if (I.stage === 0) await view.play(solve3, { ms: 650, ...clicks });
+  if (I.stage === 2) await view.play(randomScramble(25), { ms: 70, ...clicks });
+  if (I.stage === 3) await view.play(solve3, { ms: 650, ...clicks });
+  sound.stopMusic(0.6);
+  if (I.stage === 0) sound.chime();
+  if (I.stage === 3) sound.retest();
   if (I.stage === 4) { btn.disabled = false; return interlude(false); }
   I.stage++;
   interludeRender();
@@ -242,6 +280,15 @@ $("#replay").addEventListener("click", () => playStep(Math.max(1, S.done)));
 $("#scramble").addEventListener("click", () => load(randomScramble(25).join(" "), "mine"));
 $("#example").addEventListener("click", () => load(EXAMPLE, "example"));
 $("#speed").addEventListener("click", (e) => { S.fast = !S.fast; e.currentTarget.textContent = S.fast ? "Speed 2×" : "Speed 1×"; e.currentTarget.setAttribute("aria-pressed", String(S.fast)); });
+const soundBtn = $("#sound");
+const soundLabel = () => { soundBtn.textContent = sound.on ? "♪ On" : "♪ Off"; soundBtn.setAttribute("aria-pressed", String(sound.on)); };
+soundBtn.addEventListener("click", () => { sound.setOn(!sound.on); store.set("rc-sound", sound.on ? "on" : "off"); if (sound.on) { sound.unlock(); sound.tick(); } soundLabel(); });
+soundLabel();
+// Desktop: the tracker sits beside the cube, above the step card. Phone: under the cube.
+const wide = matchMedia("(min-width: 900px)");
+const placeTracker = () => (wide.matches ? $(".bench-side").prepend($("#tracker")) : $(".ticker").after($("#tracker")));
+wide.addEventListener ? wide.addEventListener("change", placeTracker) : wide.addListener(placeTracker);
+placeTracker();
 $("#flip").addEventListener("click", () => view.lookAt(view.pitch > 0 ? VIEW_BOTTOM : VIEW_TOP));
 document.querySelectorAll(".dot").forEach((d) => d.addEventListener("click", () => jump(+d.dataset.step)));
 $("#intermission-dot").addEventListener("click", () => { jump(4); S.sawInterlude = false; interlude(true); });

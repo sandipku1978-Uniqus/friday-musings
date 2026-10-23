@@ -6,6 +6,8 @@ export const words = (seq) => parse(seq).map((m) => WORDS[m] || m).join(", ");
 export const STEPS = [
   {
     title: "White cross",
+    ws: "Cash",
+    tasks: ["Bank statements in for every account", "Bank reconciliations prepared", "Reconciling items aged and explained", "Reconciliations reviewed and signed"],
     result: "White plus on the bottom",
     kid: "Make a white flower around yellow. Turn the top until a petal matches the middle square below, then turn that side twice.",
     recipe: "Front twice, then spin to the next petal.",
@@ -16,16 +18,20 @@ export const STEPS = [
   },
   {
     title: "White corners",
+    ws: "Subledgers",
+    tasks: ["Receivables aging ties to the GL", "Payables subledger ties to the GL", "Fixed asset roll-forward ties", "Inventory ties to the GL"],
     result: "Whole white side done",
     kid: "Put a white corner at the top front right, above the sides that match its colors. Do the magic trick until it drops in.",
     recipe: `Magic trick: ${words(TRICK)}.`,
     tip: "Do all 4 corners. Corner stuck at the bottom? One magic trick brings it up.",
     cfoHead: "Subledgers, one tie-out at a time.",
-    cfo: "Receivables, payables and fixed assets tie to the general ledger with the same routine, run until it ties. Watch the red counter: the trick lifts a finished cross piece out of place and puts it back, every single time.",
+    cfo: "Receivables, payables and fixed assets tie to the general ledger with the same routine, run until it ties. Watch the tracker: the trick lifts a finished cross piece out of place and puts it back, every single time.",
     protects: "The white cross: 4 pieces.",
   },
   {
     title: "Middle row",
+    ws: "Intercompany",
+    tasks: ["Balances confirmed with each counterparty", "Mismatches unwound", "Both sides booked", "Eliminations prepared"],
     result: "Two rows done",
     kid: "Find a top edge with no yellow. Turn the top until its front color matches the middle square, then do the recipe for the side it goes to.",
     recipe: `Goes right: ${words(MID_RIGHT)}. Goes left: ${words(MID_LEFT)}.`,
@@ -36,6 +42,8 @@ export const STEPS = [
   },
   {
     title: "Yellow cross",
+    ws: "Classification",
+    tasks: ["New GL accounts mapped to statement lines", "Accruals booked and coded", "Reclasses posted", "Cut-off reviewed"],
     result: "Yellow plus on top",
     kid: "Dot? Just do it. L shape? Point its arms back and left. Line? Make it go left to right.",
     recipe: `Front right, magic trick, front left: ${words(YCROSS)}.`,
@@ -46,6 +54,8 @@ export const STEPS = [
   },
   {
     title: "Match the cross",
+    ws: "Flux review",
+    tasks: ["P&L against prior period and budget", "Balance sheet movements", "Variances over threshold explained", "Commentary reviewed"],
     result: "Plus matches the sides",
     kid: "Turn the top until 2 edges match the sides below. Hold those 2 at the back and right, then do the recipe.",
     recipe: words(MATCH) + ".",
@@ -56,6 +66,8 @@ export const STEPS = [
   },
   {
     title: "Corners home",
+    ws: "Consolidation",
+    tasks: ["Subsidiary trial balances loaded", "FX translation run", "Eliminations posted", "Consolidated trial balance ties"],
     result: "All 4 corners home",
     kid: "A corner is home when its colors match the sides around it. Twisted is OK! Hold a home corner at the top front right, then do the recipe.",
     recipe: words(CORNERS_HOME) + ".",
@@ -66,12 +78,14 @@ export const STEPS = [
   },
   {
     title: "Twist the corners",
+    ws: "Suspense and sign-off",
+    tasks: ["Final adjustments posted", "Statements and disclosures drafted", "Suspense cleared to zero", "Controller and CFO sign-off"],
     result: "Solved!",
     kid: "Hold a corner with yellow on its side at the top front right. Repeat the recipe until yellow is on top. Then turn ONLY the top to bring in the next corner.",
     recipe: words(TWIST) + ".",
     tip: "Halfway, the bottom looks broken. Keep going, it fixes itself!",
     cfoHead: "The suspense account moment.",
-    cfo: "Halfway through, the white side you finished in step 2 looks wrecked. Watch the counter fall. Everyone who has cleared a suspense account knows the feeling. The rule is to finish: turn only the top between corners, and the bottom comes back once the last corner is twisted. Stop halfway and you have made it worse.",
+    cfo: "Halfway through, the white side you finished in step 2 looks wrecked, and the tracker reopens cash, subledgers, intercompany and flux review. Everyone who has cleared a suspense account knows the feeling. The rule is to finish: turn only the top between corners, and the bottom comes back once the last corner is twisted. Stop halfway and you have made it worse.",
     protects: "Two layers and the top edges: 16 pieces.",
   },
 ];

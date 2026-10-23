@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
   Cube, solve, randomScramble, STAGE, PROTECTED, intactCount, turnCount, invert, parse,
-  TRICK, MID_RIGHT, MID_LEFT, YCROSS, MATCH, CORNERS_HOME, TWIST, slotOf,
+  TRICK, MID_RIGHT, MID_LEFT, YCROSS, MATCH, CORNERS_HOME, TWIST, slotOf, D_EDGES, D_CORNERS, MID_EDGES, U_EDGES,
 } from "../2026-10-23-rubiks-cube/js/cube.js";
+import { STEPS } from "../2026-10-23-rubiks-cube/js/steps.js";
 
 const DIR = new URL("../2026-10-23-rubiks-cube/", import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, DIR), "utf8");
@@ -60,6 +61,27 @@ test("the page's example cube needs every one of the 7 steps", () => {
   for (let k = 1; k <= 7; k++) assert.ok(turnCount(segs.filter((s) => s.step === k).flatMap((s) => s.moves)) > 0, `step ${k}`);
 });
 
+test("close tracker: one workstream with 4 tasks per step", () => {
+  assert.equal(STEPS.length, 7);
+  for (const s of STEPS) {
+    assert.ok(s.ws && s.ws.length <= 24, s.title);
+    assert.equal(s.tasks.length, 4, s.title);
+  }
+});
+
+test("step 7 on the example cube reopens cash, subledgers, intercompany and flux review, then hands them back", () => {
+  const ex = read("js/app.js").match(/const EXAMPLE = "([^"]+)"/)[1];
+  const start = new Cube().applySeq(ex), segs = solve(start), c = start.copy();
+  segs.filter((s) => s.step < 7).forEach((s) => c.applySeq(s.moves));
+  const reopened = new Set();
+  for (const m of segs.filter((s) => s.step === 7).flatMap((s) => s.moves)) {
+    c.apply(m);
+    [[1, D_EDGES], [2, D_CORNERS], [3, MID_EDGES], [5, U_EDGES]].forEach(([w, ps]) => { if (!ps.every((p) => c.pieceSolved(p))) reopened.add(w); });
+  }
+  assert.deepEqual([...reopened].sort(), [1, 2, 3, 5]);
+  assert.ok(c.isSolved());
+});
+
 test("3,502 positions can be solved in 3 moves or fewer (half-turn metric)", () => {
   const moves = [..."UDLRFB"].flatMap((f) => [f, f + "'", f + "2"]);
   let frontier = [new Cube()];
@@ -84,7 +106,7 @@ test("the staged demo: the 'solve' is the scramble played backward", () => {
 test("copy follows the house style", () => {
   const post = read("content/linkedin_post.md");
   const body = post.split(/^---$/m).slice(1).join("---").trim();
-  const files = { "index.html": read("index.html"), "js/steps.js": read("js/steps.js"), "js/app.js": read("js/app.js"), "linkedin_post.md": body };
+  const files = { "index.html": read("index.html"), "js/steps.js": read("js/steps.js"), "js/app.js": read("js/app.js"), "js/sound.js": read("js/sound.js"), "linkedin_post.md": body };
   for (const [name, text] of Object.entries(files)) {
     const visible = text.replace(/<style>[\s\S]*?<\/style>/, "");
     for (const bad of [/~/, /\babout\b/i, /\bnearly\b/i, /\bapproximately\b/i, /\btoday\b/i, /this morning/i, /\bcheap/i, /\bcolour/i, /\bfavour/i]) {

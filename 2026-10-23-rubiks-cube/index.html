@@ -106,8 +106,34 @@ button { font: inherit; cursor: pointer; }
 
 .counter { margin: 6px 14px 0 46px; padding: 10px 12px; border: 1.5px dashed var(--pencil); border-radius: 6px; background: color-mix(in srgb, var(--pencil-wash) 55%, transparent); }
 .counter-head { display: flex; justify-content: space-between; gap: 8px; font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--pencil); }
-#ticks { display: flex; flex-wrap: wrap; gap: 3px; margin: 6px 0 4px; min-height: 22px; }
-.tick { width: 18px; height: 22px; display: grid; place-items: center; font-weight: 700; color: var(--ink-soft); font-family: "IBM Plex Mono", monospace; }
+#ticks { display: flex; flex-wrap: wrap; gap: 2px; margin: 2px 0 2px; min-height: 20px; }
+.ws-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.ws { display: inline-flex; align-items: center; gap: 5px; border: 1.5px solid var(--rule-strong); border-radius: 999px; padding: 3px 9px 3px 4px; font-size: .78rem; font-weight: 600; background: var(--sheet); color: var(--ink-soft); transition: background-color .25s, border-color .25s, color .25s; }
+.ws .ws-n { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font: 600 .68rem "IBM Plex Mono", monospace; background: var(--chip); color: var(--ink-soft); }
+.ws.active { border-color: var(--ink); color: var(--ink); }
+.ws.active .ws-n { background: var(--ink); color: var(--sheet); }
+.ws.signed { border-color: var(--ledger); color: var(--ledger); }
+.ws.signed .ws-n { background: var(--ledger); color: var(--ledger-ink); }
+.ws.retest { border-color: var(--pencil); color: var(--pencil); border-style: dashed; animation: wobble .5s ease-in-out infinite alternate; }
+.ws.retest .ws-n { background: var(--pencil); color: var(--sheet); }
+@keyframes wobble { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
+@media (prefers-reduced-motion: reduce) { .ws.retest { animation: none; } }
+.ws-active { margin: 10px 0 6px; padding: 8px 10px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 6px; }
+.ws-title { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; font-size: .9rem; color: var(--ink); }
+.ws-title .mono { color: var(--pencil); }
+.task { display: grid; grid-template-columns: 20px 1fr; gap: 6px; align-items: start; font-size: .86rem; color: var(--ink-soft); padding: 2px 0; }
+.task .box { width: 16px; height: 16px; margin-top: 3px; border: 1.5px solid var(--ink-soft); border-radius: 3px; display: grid; place-items: center; color: var(--pencil); font: 700 .8rem "IBM Plex Mono", monospace; }
+.task.done { color: var(--ink); }
+.task.done .box { border-color: var(--pencil); }
+.task.done .box::before { content: "✓"; }
+.task.just .box { animation: pop .35s ease-out; }
+@keyframes pop { 0% { transform: scale(.4) rotate(-20deg); } 70% { transform: scale(1.25) rotate(-8deg); } 100% { transform: scale(1) rotate(-6deg); } }
+.retest-note { margin-top: 4px; font-size: .8rem; color: var(--pencil); font-weight: 600; }
+.intact { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--pencil); }
+@media (min-width: 900px) {
+  .bench-side .counter { margin: 0 14px 14px 14px; }
+}
+.tick { width: 15px; height: 20px; display: grid; place-items: center; font-weight: 700; color: var(--ink-soft); font-family: "IBM Plex Mono", monospace; }
 .tick.ok { color: var(--pencil); transform: rotate(-6deg); }
 #low { font-size: .82rem; color: var(--ink-soft); }
 
@@ -117,11 +143,11 @@ button { font: inherit; cursor: pointer; }
 .dot.now { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 3px var(--rule); }
 .star { border: 1.5px dashed var(--pencil); color: var(--pencil); background: var(--sheet); border-radius: 50%; width: 34px; height: 34px; padding: 0; font-size: .9rem; }
 
-.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 14px 0 46px; }
+.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 14px 0 46px; }
 .controls .primary { grid-column: 1 / -1; }
 .primary { background: var(--ledger); color: var(--ledger-ink); border: 0; border-radius: 8px; padding: 12px 14px; font-weight: 700; font-size: 1rem; min-height: 48px; }
 .primary:disabled { opacity: .55; cursor: progress; }
-.tool { border: 1.5px solid var(--rule-strong); background: var(--sheet); color: var(--ink); border-radius: 8px; min-height: 44px; padding: 0 8px; font-weight: 600; font-size: .9rem; }
+.tool { border: 1.5px solid var(--rule-strong); background: var(--sheet); color: var(--ink); border-radius: 8px; min-height: 44px; padding: 0 4px; font-weight: 600; font-size: .8rem; white-space: nowrap; }
 .tool:disabled { opacity: .45; }
 
 .card { margin: 16px 14px 16px 46px; padding: 16px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 8px; }
@@ -207,7 +233,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
   <div class="wrap hero">
     <p class="eyebrow">#FridayMusings · Sandip Khetan</p>
     <h1>Every ledger is its own scramble.</h1>
-    <p class="lede">I made a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist. Solve the cube below, one step at a time, and keep an eye on the red pencil. It counts the work you already finished, and every recipe disturbs it on purpose before handing it back.</p>
+    <p class="lede">I made a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist. Solve the cube below, one step at a time, with the sound on. The close tracker beside it signs off one workstream per step in red pencil, and every recipe reopens finished work on purpose before handing it back.</p>
     <a class="hook" href="#gift">
       <img src="poster.jpg" alt="Title card of the kid tutorial: Solve a Rubik’s Cube" width="88" height="88">
       <span><b>The kid version is at the end</b><span>Video, 1 min 42 s, age 8 and up. It’s the reason this page exists.</span></span>
@@ -235,11 +261,14 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <div id="caption"></div>
             <div class="moveline"><span id="move"></span><span id="count"></span></div>
           </div>
-          <div class="counter">
-            <div class="counter-head"><span>Finished work intact</span><span id="intact" class="mono"></span></div>
+          <section class="counter" id="tracker" aria-label="Close tracker">
+            <div class="counter-head"><span>Close tracker</span><span id="tr-sum" class="mono"></span></div>
+            <ol class="ws-list" id="ws-list"></ol>
+            <div class="ws-active" id="ws-active" aria-live="polite"></div>
+            <div class="intact"><span>Finished work intact</span><b id="intact" class="mono"></b></div>
             <div id="ticks" aria-hidden="true"></div>
             <div id="low"></div>
-          </div>
+          </section>
           <nav class="dots" aria-label="Steps">
             <button class="dot" type="button" data-step="1" aria-label="Step 1">1</button>
             <button class="dot" type="button" data-step="2" aria-label="Step 2">2</button>
@@ -255,6 +284,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <button class="tool" id="replay" type="button">↺ Replay</button>
             <button class="tool" id="speed" type="button" aria-pressed="false">Speed 1×</button>
             <button class="tool" id="flip" type="button">⇅ Flip</button>
+            <button class="tool" id="sound" type="button" aria-pressed="true" aria-label="Sound">♪ On</button>
           </div>
         </div>
         <div class="bench-side">
@@ -293,7 +323,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <h2>Five things the cube tells a finance team</h2>
       <ol class="notes">
         <li><span class="tm">✓1</span><div><b>Layers, in order.</b>You can’t do step 5 before step 2. A close runs the same way: cash, subledgers, intercompany, then the top-side work. Skipping ahead feels fast and ends in a reopened period.</div></li>
-        <li><span class="tm">✓2</span><div><b>Protect what’s already solved.</b>Every recipe lifts finished work on purpose and puts it back. That’s change management: when you touch a control, re-test the ones next to it. The red counter is a regression test you can watch.</div></li>
+        <li><span class="tm">✓2</span><div><b>Protect what’s already solved.</b>Every recipe lifts finished work on purpose and puts it back. That’s change management: when you touch a control, re-test the ones next to it. Watch the close tracker: signed-off workstreams flip to re-testing while a recipe runs, then sign off again.</div></li>
         <li><span class="tm">✓3</span><div><b>Trust the mess in the middle.</b>Step 7 makes the finished white side look broken, then fixes it. Every controller who has cleared a suspense account knows that week. Finish the recipe; don’t stop at the ugly part.</div></li>
         <li><span class="tm">✓4</span><div><b>A recipe beats talent.</b>The four-turn magic trick does the work in step 2, sits inside step 4, and comes back on the bottom in step 7. A good control is a recipe a new hire can run, not a gift you hope stays with the company.</div></li>
         <li><span class="tm">✓5</span><div><b>Repeatable beats optimal.</b>A computer can solve any position in 20 moves or fewer. People use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams, and for the auditors who have to follow them.</div></li>
