@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+pv_*.png
+output/*_silent.mp4
+output/*.wav
+output/*.events.json
