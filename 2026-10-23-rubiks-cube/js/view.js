@@ -52,12 +52,16 @@ export class CubeView {
 
   // Plays moves one by one; onMove(i, move) fires after each move lands on the cube.
   // `gate` (optional) is awaited before each move, so autoplay can pause between turns.
-  async play(moves, { ms = 260, onMove = () => {}, gate = null } = {}) {
+  // `timing` (optional) is awaited next and returns the move's duration in ms, so turns can land on the music's beat.
+  async play(moves, { ms = 260, onMove = () => {}, gate = null, timing = null } = {}) {
     const my = ++this.token;
     for (let i = 0; i < moves.length; i++) {
       if (gate) await gate();
       if (my !== this.token) return false;
-      const m = moves[i], dur = reduced() ? 0 : ms * (m.endsWith("2") ? 1.45 : 1);
+      const m = moves[i];
+      let dur = ms * (m.endsWith("2") ? 1.45 : 1);
+      if (timing) { dur = await timing(m); if (my !== this.token) return false; }
+      if (reduced()) dur = 0;
       if (dur > 0) {
         const t0 = performance.now();
         await new Promise((res) => {
