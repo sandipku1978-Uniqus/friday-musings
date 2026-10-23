@@ -84,10 +84,13 @@ export class CubeView {
     return true;
   }
 
+  // A newer camera move replaces an older one still in flight (the older one stops where it is).
   lookAt(view, ms = 650) {
     const from = { yaw: this.yaw, pitch: this.pitch }, t0 = performance.now(), dur = reduced() ? 1 : ms;
+    const my = (this.look = (this.look || 0) + 1);
     return new Promise((res) => {
       const tick = (now) => {
+        if (my !== this.look) return res();
         const t = ease(Math.min(1, (now - t0) / dur));
         this.yaw = from.yaw + (view.yaw - from.yaw) * t;
         this.pitch = from.pitch + (view.pitch - from.pitch) * t;
