@@ -8,6 +8,7 @@ and an original soundtrack.
 - Rebuild: `pip install -r requirements.txt`, install ffmpeg, then `python build.py`
 - Quick check of one step: `python build.py --only 4`
 - Post text: `content/linkedin_post.md`
+- Interactive page: `index.html` (served at `/2026-10-23-rubiks-cube/`; run `npm run dev` from the repo root)
 
 Working on this with Claude Code? Start with `CLAUDE.md`: it has the architecture, the rules the
 video follows, verified facts and the open items.

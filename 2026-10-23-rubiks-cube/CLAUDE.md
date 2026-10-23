@@ -32,11 +32,30 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `build.py` | verify, render, soundtrack, mux, GIF. |
 | `preview.py` | Renders stills of one scene without encoding a video. |
 | `fonts/` | Inter and Inter Display (SIL OFL 1.1, see `LICENSE-Inter.txt`), bundled so renders match on any machine. |
-| `content/linkedin_post.md` | The post text that goes with the video. |
+| `content/linkedin_post.md` | The post text that goes with the video and links to the page. |
+| `index.html` | The interactive musing, served by Vercel at `/2026-10-23-rubiks-cube/`. Static, no build step. |
+| `js/cube.js` | Browser twin of `cube.py` (same axes, colors, move words) plus a solver that runs the video's 7 steps on any scramble. Recipes must equal `stages.py`. |
+| `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
+| `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
+| `js/app.js` | Page wiring: workbench, red-pencil "finished work intact" counter, the intermission, the self-check. |
+| `poster.jpg`, `og.png` | Video poster (frame at 2 s) and the 1200x630 LinkedIn preview card. |
 
 How each step's demo cube is made: `demo_cube(k)` takes `scrambled_after(k, seed=100 + k)` (the step's goal state)
 and applies the inverse of that step's moves. So the step starts with only the earlier steps done and ends exactly
 on its own goal. Changing a step's moves changes its demo cube automatically.
+
+## The interactive page
+
+- Run it: from the repo root, `npm run dev`, then open `http://localhost:3000/2026-10-23-rubiks-cube/`.
+- Test it: `npm test` (root) runs `tests/rubiks.test.js`: recipes match `stages.py`, direction words match
+  `verify.py`, the solver solves 400 random cubes with every step ending on its own goal and handing finished work
+  back, the example cube needs all 7 steps, the 3,502 fact (breadth-first search), and the house-style copy rules
+  (no "~", "about", "nearly", "today", "cheap", British spellings; LinkedIn post under 3,000 characters).
+- Layout is a working paper (columnar pad, W/P ref, sign-off boxes, red-pencil tickmarks), deliberately unlike
+  who-picks-up. Mobile first: one column under 900 px.
+- The solver never uses back-face moves and only spins with `y`, like the video. The intermission ("Are you
+  watching closely?") sits between steps 3 and 4.
+- The video loads only when tapped (`preload="none"`); it is 12.6 MB.
 
 ## Rules the video follows (keep these)
 
@@ -69,10 +88,8 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 
 1. Video v4 is rendered. The soundtrack mix has not been listened to by a person yet, so check levels and that the
    per-turn click is not too loud (`sfx()` in `music.py`, `click() * 0.30`).
-2. `content/linkedin_post.md` predates video v4. Update it to match: the golden rule, "spin the cube" in step 1,
-   the plan card wording and the step tips.
-3. Possible next pieces: a shorter cut for adults; a Friday Musing on "every polished demo is a three-move solve:
-   whoever ran the demo also did the scramble" (audit lens: never test a control on a sample the preparer picked).
+2. `content/linkedin_post.md` is rewritten for the interactive page (corporate hook first, the video as the gift).
+3. Possible next piece: a shorter cut for adults. The staged-demo idea now lives in the page's intermission.
 4. Known limitation: building the white flower (step 1) is learned by trying; the video shows the flower already
    made and says that it takes a few tries.
 

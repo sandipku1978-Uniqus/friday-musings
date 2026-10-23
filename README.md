@@ -4,11 +4,13 @@ Interactive essays by Sandip Khetan, Co-Founder, Uniqus Consultech.
 
 | Date | Musing | Path |
 |---|---|---|
+| 23 Oct 2026 | Every ledger is its own scramble (Rubik's Cube) | `/2026-10-23-rubiks-cube/` |
 | 3 Oct 2026 | Who picks up when your agent calls? | `/2026-10-03-who-picks-up/` |
 | 3 Oct 2026 | Give my concierge a chore (live demo) | `/concierge/` |
 
 ## What's here
 
+- **`2026-10-23-rubiks-cube/`**: the musing. Static page with a playable cube that solves any scramble in the kid tutorial's 7 steps, a kid view and a CFO view per step, a counter for finished work, an intermission on staged demos, and a close self-check. The kid tutorial video and its Python build pipeline live in the same folder (see its `CLAUDE.md`).
 - **`2026-10-03-who-picks-up/`**: the musing. Static page with a scripted concierge simulator, the controller's view, six bets, and an agent-readiness check.
 - **`concierge/`**: a live AI concierge (Claude Sonnet 5.5). Visitors type everyday errands. It books with demo businesses that run agent gateways, creates calendar entries and drafts messages, all inside a mandate the visitor sets.
 - **`/gateway/*` and `/.well-known/agent-card.json`**: five fictional businesses (restaurant, clinic, home services, insurer, gym) that answer AI agents. Any agent can call them, and receipts are Ed25519-signed.
@@ -62,7 +64,7 @@ Optional: set `AERODATABOX_KEY` to switch on live flight status (see below). Opt
 npm install
 npm run dev        # scripted model, no API key or spend: http://localhost:3000
 npm run dev:live   # real model; needs .env.local (copy .env.example)
-npm test           # gateway, signing, mandate enforcement, full approve/decline runs
+npm test           # gateway, signing, mandate enforcement, full approve/decline runs; Rubik's Cube solver, cube facts and copy rules
 ```
 
 ## Adding a musing

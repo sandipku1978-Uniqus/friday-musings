@@ -1,57 +1,37 @@
-# LinkedIn post: Friday Musing (draft)
+# LinkedIn post: Friday Musing
 
-Status: written for the earlier video. Update it to match video v4 before posting: add the golden rule
-(keep yellow on top), step 1 now says "front twice, then spin to the next petal", and use the step tips
-from the video. Keep it under LinkedIn's 3,000-character limit.
+Status: written for the interactive page (`/2026-10-23-rubiks-cube/`) and video v4. Post it with the video
+(`output/rubiks_cube_7_steps.mp4`) attached. Everything below the rule is the post; `npm test` checks it stays
+under LinkedIn's 3,000-character limit and links to the page. If the Vercel project name changes, update the link.
 
 ---
 
-Friday Musing: If an 8-Year-Old Can Solve It, So Can a CFO
+Friday Musing: Every ledger is its own scramble
 
-A Rubik's Cube has 43,252,003,274,489,856,000 possible positions, and only one of them is solved. Here is a way to get there that a child can follow.
+A Rubik’s Cube has 43,252,003,274,489,856,000 positions. A TV presenter will solve one in 3 moves.
 
-First, learn these moves. Hold the cube with one side facing you.
-• Right UP: turn the right side so the front stickers go up. Right DOWN is the opposite.
-• Left UP: turn the left side so the front stickers go up. Left DOWN is the opposite.
-• Top LEFT: slide the top row so the front stickers go left. Top RIGHT is the opposite.
-• Front RIGHT: turn the front like a steering wheel to the right. Front LEFT is the opposite.
+Ask who scrambled it.
 
-The magic trick is Right up, Top left, Right down, Top right. Say it out loud, because you will use it a lot.
+Only 3,502 of those positions can be solved in 3 moves or fewer. The presenter did the scramble off camera, and the “solve” is that scramble played backward. Audit lens: never test a control on a sample the preparer picked.
 
-1. Make a flower
-Put the yellow center on top. Move the 4 white edge pieces around it like petals. Turn the top until a petal's side color matches the center below it, then turn that side twice. Do this for all 4 petals, and you have a white cross on the bottom.
+I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist.
 
-2. White corners
-Keep white at the bottom from now on. Put a white corner on top, right above where it belongs, at the front-right. Do the magic trick again and again until it pops into place.
+→ Layers, in order. You can’t do step 5 before step 2. Cash, subledgers, intercompany, then the top-side work.
 
-3. Middle row
-Find a top edge with no yellow on it. Turn the top until its front color matches the center.
-If it goes right: Top left, Right up, Top right, Right down, Top right, Front left, Top left, Front right.
-If it goes left: Top right, Left up, Top left, Left down, Top left, Front right, Top right, Front left.
+→ Protect what’s already solved. Every recipe lifts finished work on purpose and puts it back. That’s change management, and regression testing for controls.
 
-4. Yellow cross
-Do Front right, then the magic trick, then Front left. Repeat until you see a yellow plus. If you see a line, hold it flat. If you see an L, point it to the back-left.
+→ Trust the mess in the middle. In step 7 the finished white side looks broken, then fixes itself. Every controller who has cleared a suspense account knows the feeling.
 
-5. Match the cross
-Turn the top until 2 side-by-side edges match their sides. Hold them at the back and right, then do:
-Right up, Top left, Right down, Top left, Right up, Top left, Top left, Right down, Top left.
-If the 2 matching edges are opposite each other, do it once and look again.
+→ A recipe beats talent. One four-turn magic trick does the work in step 2, sits inside step 4 and comes back on the bottom in step 7. A good control is a repeatable recipe, not a gift you hope stays with the company.
 
-6. Corners home
-Find a corner sitting in its right spot, even if it is twisted. Hold it at the top front-right, then do:
-Top left, Right up, Top right, Left up, Top left, Right down, Top right, Left down.
-Repeat until all 4 corners are home. If none are home, do it once from anywhere.
+→ Repeatable beats optimal. A computer can solve any position in 20 moves or fewer. Teams use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams.
 
-7. Twist the corners
-Hold a twisted corner at the top front-right. Repeat Right down, Bottom left, Right up, Bottom right until its yellow faces up. Then turn only the top to bring in the next corner.
-The cube will look broken. Do not panic, because it fixes itself. Turn the top once more to finish.
+The interactive version: scramble a cube (yours will look different, like every company’s ledger), solve it one step at a time, and watch a red-pencil counter track the work you already finished. Every step has a kid view and a CFO view, and there is an intermission on staged demos.
 
-What the cube taught me
-→ Solve in layers.
-→ Protect what is already solved.
-→ A simple process beats raw talent.
-→ Trust the mess in the middle. Every controller who has cleared a suspense account knows this feeling.
+https://friday-musings.vercel.app/2026-10-23-rubiks-cube/
 
-Which step stopped you last time?
+The gift is the video in this post: the original tutorial, seven steps, a robot hand on every turn, age 8 and up. Hand your phone to someone who is 8 and see who finishes first.
 
-#FridayMusings
+Which step of your close looks broken right before it gets better?
+
+#FridayMusings #Controllership #InternalControls #CFO #RubiksCube
