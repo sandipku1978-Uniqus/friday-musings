@@ -2,7 +2,7 @@
 import { Cube, solve, randomScramble, intactCount, piecesHome, PROTECTED, turnCount, invert, parse, WORDS, D_EDGES, D_CORNERS, MID_EDGES, U_EDGES } from "./cube.js";
 import { CubeView, VIEW_TOP, VIEW_BOTTOM } from "./view.js";
 import { STEPS, CHECKS, words } from "./steps.js";
-import { Sound } from "./sound.js";
+import { Sound, gridSlot, BEAT, EIGHTH, SIXTEENTH, BAR } from "./sound.js";
 
 const $ = (s) => document.querySelector(s);
 const EXAMPLE = "L2 R U2 B F' B' U R F R2 L2 D' L D' R' D' R F' R F' U' L R2 L B2";
@@ -25,6 +25,23 @@ const blocked = () => S.paused || S.offscreen;
 const gate = () => (blocked() ? new Promise((res) => S.waiters.push(res)) : Promise.resolve());
 function release() { if (blocked()) return; const w = S.waiters; S.waiters = []; w.forEach((f) => f()); }
 const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+// Music plays while a step runs, all through autoplay (between steps and in the intermission), during the
+// intermission demo, and for 4 s after a step in step-by-step mode so quick clicks keep the groove going.
+const musicWanted = () => !blocked() && (S.playing || S.running || S.demo || Date.now() < (S.grace || 0));
+function syncMusic(fade) { if (musicWanted()) sound.startMusic(); else sound.stopMusic(fade); }
+// Each turn lands on the music's grid: eighth notes at 1x, sixteenths at 2x. Its click is scheduled on the audio
+// clock for the landing beat, so the sound is exactly on time and the picture lands within a frame of it.
+// Without music, the cube keeps the same rhythm and clicks when each turn lands.
+const onGrid = (step) => async (m) => {
+  const extra = m.endsWith("2") ? step : 0, g = sound.grid();
+  if (!g) { S.clickOnLand = true; return 1000 * (step + extra); }
+  S.clickOnLand = false;
+  const slot = gridSlot(g.now, g.t0, step);
+  if (m[0] !== "y") sound.click(g.now + slot.wait + slot.dur + extra);
+  if (slot.wait > 0) await wait(slot.wait * 1000);
+  return 1000 * (slot.dur + extra);
+};
+const onBeat = (m) => onGrid(S.fast ? SIXTEENTH : EIGHTH)(m);
 
 function load(scramble, mode) {
   view.cancel();
@@ -146,36 +163,39 @@ async function playStep(k) {
   if (S.playing) return false;
   const id = ++S.stepId, mine = () => S.stepId === id;
   S.playing = true; S.low = null; S.cstep = k; S.tasks = 0;
-  if (!blocked()) sound.startMusic();
+  sound.setTension(0);
+  syncMusic();
   view.setCube(S.snaps[k].copy());
   S.done = k - 1;
   render();
   await view.lookAt(VIEW_TOP, 450);
-  const segs = S.segs.filter((s) => s.step === k), n = stepTurns(k);
-  const ms = Math.max(110, Math.min(300, 11000 / Math.max(n, 1))) / (S.fast ? 2 : 1);
+  const segs = S.segs.filter((s) => s.step === k), n = stepTurns(k), prot = PROTECTED[k].length;
   let done = 0;
   for (const seg of segs) {
     ticker(seg, "", done, n);
     const ok = await view.play(seg.moves, {
-      ms,
+      timing: onBeat,
       gate,
       onMove: (_, m) => {
-        if (m[0] !== "y") { done++; sound.click(); }
+        if (m[0] !== "y") { done++; if (S.clickOnLand) sound.click(); }
         const t = done >= n ? 4 : Math.min(3, Math.floor((4 * done) / Math.max(n, 1)));
         if (t > S.tasks) { S.tasks = t; S.justTicked = t - 1; sound.tick(); }
         ticker(seg, m, done, n);
         const now = intactCount(view.cube, k);
         S.low = S.low === null ? now : Math.min(S.low, now);
+        if (prot) sound.setTension(1 - now / prot);
         counter(view.cube, k);
       },
     });
-    if (!ok || !mine()) { if (mine()) { S.playing = false; sound.stopMusic(0.3); } return false; }
+    if (!ok || !mine()) { if (mine()) { S.playing = false; syncMusic(0.3); } return false; }
   }
   if (!mine()) return false;
   S.playing = false;
   S.done = k;
   S.tasks = 4;
-  sound.stopMusic();
+  sound.setTension(0);
+  if (!S.running && k < 7) { S.grace = Date.now() + 4000; setTimeout(() => syncMusic(), 4100); }
+  syncMusic();
   if (k < 7) sound.chime();
   ticker(null, "", 0, 0);
   $("#caption").textContent = `✓ ${STEPS[k - 1].result}`;
@@ -186,8 +206,8 @@ async function playStep(k) {
 }
 
 // ---- autoplay --------------------------------------------------------------------------------
-async function hold(ms, alive) {
-  for (let left = S.fast ? ms / 2 : ms; left > 0; left -= 100) {
+async function hold(ms, alive, scaled = true) {
+  for (let left = scaled && S.fast ? ms / 2 : ms; left > 0; left -= 100) {
     await gate();
     if (!alive()) return false;
     await wait(100);
@@ -213,16 +233,19 @@ async function autoRun() {
       continue;
     }
     if (!(await playStep(S.done + 1)) || !alive()) break;
-    if (S.done < 7 && !(await hold(1800, alive))) break;
+    // the next step starts on a downbeat (at least one beat after the sign-off chime)
+    const bar = sound.untilBar();
+    if (S.done < 7 && !(await hold(bar === null ? 1800 : bar * 1000, alive, bar === null))) break;
   }
-  if (S.runId === my) { S.running = false; S.paused = false; render(); }
+  if (S.runId === my) { S.running = false; S.paused = false; render(); syncMusic(); }
 }
-function stopAuto() { S.running = false; S.runId++; S.paused = false; release(); }
-function pause() { S.paused = true; sound.stopMusic(0.3); render(); }
-function resume() { S.paused = false; release(); if (S.playing && !blocked()) sound.startMusic(); render(); }
+function stopAuto() { S.running = false; S.runId++; S.paused = false; release(); syncMusic(0.3); }
+function pause() { S.paused = true; syncMusic(0.3); render(); }
+function resume() { S.paused = false; release(); syncMusic(); render(); }
 
 function finale() {
   sound.fanfare();
+  sound.stopMusic(2 * BAR);
   $("#reviewed").classList.add("on");
   $("#caption").textContent = `✓ Solved in ${S.total} turns. A computer needs 20 or fewer.`;
 }
@@ -231,7 +254,8 @@ function jump(k) {
   view.cancel();
   S.stepId++;
   S.playing = false; S.low = null; S.cstep = k; S.tasks = 0;
-  sound.stopMusic(0.3);
+  sound.setTension(0);
+  syncMusic(0.3);
   S.done = k - 1;
   view.setCube(S.snaps[k].copy());
   view.lookAt(VIEW_TOP, 400);
@@ -247,6 +271,7 @@ function interlude(open) {
   $("#steps-ui").hidden = open;
   $("#cube-label").textContent = open ? "The presenter’s cube" : "";
   $("#scramble-note").textContent = open ? "Your cube is safe in the drawer." : "";
+  sound.setSection(open ? "breakdown" : "main");
   if (open) {
     I.saved = view.cube;
     const faces = ["R", "U", "F", "L", "D"].sort(() => Math.random() - 0.5).slice(0, 3);
@@ -280,12 +305,14 @@ async function interludeNext() {
   const btn = $("#i-next");
   btn.disabled = true;
   const solve3 = invert(I.scramble).split(" ");
-  const clicks = { onMove: () => sound.click(), gate };
-  if ((I.stage === 0 || I.stage === 2 || I.stage === 3) && !blocked()) sound.startMusic();
-  if (I.stage === 0) await view.play(solve3, { ms: 650, ...clicks });
-  if (I.stage === 2) await view.play(randomScramble(25), { ms: 70, ...clicks });
-  if (I.stage === 3) await view.play(solve3, { ms: 650, ...clicks });
-  sound.stopMusic(0.6);
+  const clicks = { onMove: (_, m) => { if (S.clickOnLand && m[0] !== "y") sound.click(); }, gate };
+  const animates = I.stage === 0 || I.stage === 2 || I.stage === 3;
+  if (animates) { S.demo = true; syncMusic(); }
+  // the presenter's 3-move "solve" lands on the beat; the reader's 25-turn sample runs in sixteenths
+  if (I.stage === 0) await view.play(solve3, { timing: onGrid(BEAT), ...clicks });
+  if (I.stage === 2) await view.play(randomScramble(25), { timing: onGrid(SIXTEENTH), ...clicks });
+  if (I.stage === 3) await view.play(solve3, { timing: onGrid(BEAT), ...clicks });
+  if (animates) { S.demo = false; syncMusic(0.6); }
   if (I.stage === 0) sound.chime();
   if (I.stage === 3) sound.retest();
   I.busy = false;
@@ -363,7 +390,7 @@ $("#i-pause").addEventListener("click", () => (S.paused ? resume() : pause()));
 // Sound needs a gesture: the first tap or key press anywhere unlocks it, and the loop joins in if the cube is moving.
 const unlockSound = () => {
   if (!sound.unlock(true)) return;
-  const go = () => { if (S.playing && !blocked()) sound.startMusic(); hint(); };
+  const go = () => { syncMusic(); hint(); };
   sound.ctx.state === "running" ? go() : sound.ctx.resume().then(go, () => {});
 };
 document.addEventListener("pointerdown", unlockSound, { passive: true });
@@ -372,14 +399,15 @@ document.addEventListener("keydown", unlockSound);
 if (typeof IntersectionObserver === "function") {
   new IntersectionObserver(([e]) => {
     S.offscreen = e.intersectionRatio === 0;
-    if (S.offscreen) sound.stopMusic(0.3); else { release(); if (S.playing && !blocked()) sound.startMusic(); }
+    if (!S.offscreen) release();
+    syncMusic(0.3);
     if (e.intersectionRatio >= 0.6 && S.auto && !S.started) { S.started = true; autoRun(); }
   }, { threshold: [0, 0.6] }).observe($("#stage"));
 }
 $("#speed").addEventListener("click", (e) => { S.fast = !S.fast; e.currentTarget.textContent = S.fast ? "Speed 2×" : "Speed 1×"; e.currentTarget.setAttribute("aria-pressed", String(S.fast)); });
 const soundBtn = $("#sound");
 const soundLabel = () => { soundBtn.textContent = sound.on ? "♪ On" : "♪ Off"; soundBtn.setAttribute("aria-pressed", String(sound.on)); };
-soundBtn.addEventListener("click", () => { sound.setOn(!sound.on); store.set("rc-sound", sound.on ? "on" : "off"); if (sound.on) { sound.unlock(); sound.tick(); } soundLabel(); });
+soundBtn.addEventListener("click", () => { sound.setOn(!sound.on); store.set("rc-sound", sound.on ? "on" : "off"); if (sound.on) { unlockSound(); sound.tick(); } soundLabel(); hint(); });
 soundLabel();
 // Desktop: the tracker sits beside the cube, above the step card. Phone: under the cube.
 const wide = matchMedia("(min-width: 900px)");
@@ -397,3 +425,5 @@ $("#kid-steps").innerHTML = STEPS.map((s, i) => `<li><b>${i + 1}. ${s.title}.</b
 $("#trick-words").textContent = words("R U R' U'");
 checklist();
 load(EXAMPLE, "example");
+// ?debug exposes the internals to the browser tests (beat alignment, autoplay state). Nothing else reads it.
+if (new URLSearchParams(location.search).has("debug")) window.__rc = { S, sound, view };

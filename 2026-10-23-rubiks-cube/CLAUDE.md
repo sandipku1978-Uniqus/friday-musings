@@ -38,7 +38,7 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
 | `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
 | `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, the self-check. |
-| `js/sound.js` | The video's soundtrack (`music.py`) re-synthesized live with Web Audio: loop while the cube turns, a click per turn, a pencil tick per close task, a chime per sign-off. Starts only after a tap; the ♪ toggle is remembered per browser. |
+| `js/sound.js` | The page soundtrack: the video's theme (`music.py` chords, arpeggio, bell tune) rearranged at 124 BPM (four-on-the-floor kick with a click transient, off-beat sawtooth bass and open hats, chord stabs, fills, a crash every 8 bars), synthesized live with Web Audio. Calibrated to -16 LUFS (`LEVEL`), peaks at -3.5 dBFS. Cube turns land on its eighth-note grid (`gridSlot`), turn clicks are scheduled on the audio clock, and a low-pass filter (`tensionCutoff`) muffles the mix while finished work is out of place. The intermission switches to a breakdown section. Starts only after a tap; sets `navigator.audioSession.type = "playback"` so the iPhone silent switch does not mute it. |
 | `poster.jpg`, `og.png` | Video poster (frame at 2 s) and the 1200x630 LinkedIn preview card. |
 
 How each step's demo cube is made: `demo_cube(k)` takes `scrambled_after(k, seed=100 + k)` (the step's goal state)
@@ -93,6 +93,10 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 
 1. Video v4 is rendered. The soundtrack mix has not been listened to by a person yet, so check levels and that the
    per-turn click is not too loud (`sfx()` in `music.py`, `click() * 0.30`).
+   The page soundtrack (`js/sound.js`) was measured from offline renders (BS.1770 loudness, a 300 Hz phone-speaker
+   high-pass, spectral flux): the first page version played at -21.9 LUFS and lost 8.1 dB on a phone; the 124 BPM
+   rearrangement plays at -15.9 LUFS, loses 4.3 dB on a phone, and has twice the beat density (8.2 vs 4.1 onsets/s).
+   A person still needs to listen on a phone.
 2. `content/linkedin_post.md` is rewritten for the interactive page (corporate hook first, the video as the gift).
 3. Possible next piece: a shorter cut for adults. The staged-demo idea now lives in the page's intermission.
 4. Known limitation: building the white flower (step 1) is learned by trying; the video shows the flower already

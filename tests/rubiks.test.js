@@ -6,6 +6,7 @@ import {
   TRICK, MID_RIGHT, MID_LEFT, YCROSS, MATCH, CORNERS_HOME, TWIST, slotOf, D_EDGES, D_CORNERS, MID_EDGES, U_EDGES,
 } from "../2026-10-23-rubiks-cube/js/cube.js";
 import { STEPS } from "../2026-10-23-rubiks-cube/js/steps.js";
+import { gridSlot, tensionCutoff, BPM, BAR, EIGHTH, SIXTEENTH, LEVEL } from "../2026-10-23-rubiks-cube/js/sound.js";
 
 const DIR = new URL("../2026-10-23-rubiks-cube/", import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, DIR), "utf8");
@@ -80,6 +81,32 @@ test("step 7 on the example cube reopens cash, subledgers, intercompany and flux
   }
   assert.deepEqual([...reopened].sort(), [1, 2, 3, 5]);
   assert.ok(c.isSolved());
+});
+
+test("soundtrack: 124 BPM grid, and cube turns land on it even when frames arrive late", () => {
+  assert.equal(BPM, 124);
+  assert.ok(Math.abs(BAR - 4 * 60 / 124) < 1e-12 && Math.abs(EIGHTH - BAR / 8) < 1e-12 && Math.abs(SIXTEENTH - BAR / 16) < 1e-12);
+  for (const step of [EIGHTH, SIXTEENTH]) {
+    let t = 0.437, frames = 7;
+    const t0 = 0.05;
+    for (let i = 0; i < 200; i++) {
+      const { wait, dur } = gridSlot(t, t0, step);
+      assert.ok(wait >= 0 && wait < step && dur > 0 && dur <= step + 1e-12);
+      const land = t + wait + dur;
+      const off = Math.abs(((land - t0) / step) - Math.round((land - t0) / step)) * step;
+      assert.ok(off < 1e-9, `turn ${i} lands ${off}s off the grid`);
+      frames = (frames * 31 + 11) % 17;
+      t = land + frames / 1000; // the next turn starts up to 16 ms late, like a requestAnimationFrame tick
+    }
+  }
+});
+
+test("soundtrack: tension muffles the mix as finished work leaves its place", () => {
+  assert.equal(Math.round(tensionCutoff(0)), 18000);
+  assert.equal(Math.round(tensionCutoff(1)), 700);
+  for (let x = 0; x < 1; x += 0.125) assert.ok(tensionCutoff(x) > tensionCutoff(x + 0.125));
+  assert.ok(tensionCutoff(-1) === tensionCutoff(0) && tensionCutoff(2) === tensionCutoff(1));
+  assert.ok(LEVEL > 0 && LEVEL < 1, "output trim stays below unity");
 });
 
 test("3,502 positions can be solved in 3 moves or fewer (half-turn metric)", () => {
