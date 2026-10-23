@@ -175,7 +175,22 @@ async function playStep(k) {
   render();
   await view.lookAt(VIEW_TOP, 450);
   const segs = S.segs.filter((s) => s.step === k), n = stepTurns(k), prot = PROTECTED[k].length;
-  let done = 0, cur = null;
+  const low = k === 7 ? lowPoint(k) : null;
+  let done = 0, cur = null, held = false;
+  // Step 7 stops at its low point, so the mess in the middle is seen before the recipe puts it right.
+  // With music the stop ends on a downbeat: one bar after the next one starts, two if that is under 2.5 s.
+  const timing = async (m) => {
+    if (low && !held && done === low.at) {
+      held = true;
+      $("#caption").textContent = `Low point: ${low.min} of ${low.prot} intact. Finish the recipe.`;
+      $("#caption").classList.add("low");
+      const bar = sound.untilBar();
+      const secs = bar === null ? 3.5 : bar + BAR < 2.5 ? bar + 2 * BAR : bar + BAR;
+      await hold(secs * 1000, mine, bar === null);
+      $("#caption").classList.remove("low");
+    }
+    return onBeat(m);
+  };
   const onMove = (_, m) => {
     if (m[0] !== "y") { done++; if (S.clickOnLand) sound.click(); }
     const t = done >= n ? 4 : Math.min(3, Math.floor((4 * done) / Math.max(n, 1)));
@@ -189,14 +204,14 @@ async function playStep(k) {
   for (const seg of segs) {
     cur = seg;
     ticker(seg, "", done, n);
-    // the first corner of step 2 is the reader's: they run the magic trick themselves
-    if (k === 2 && seg.kind === "trick" && !S.ytOffered) {
+    // the first corner of step 2 the reader can see is theirs: they run the magic trick themselves
+    if (k === 2 && seg.kind === "trick" && !S.ytOffered && padInView()) {
       S.ytOffered = true;
       const how = await yourTurn(onMove, mine);
       if (how === "abort" || !mine()) { if (mine()) { S.playing = false; syncMusic(0.3); } return false; }
       if (how === "done") continue;
     }
-    const ok = await view.play(seg.moves, { timing: onBeat, gate, onMove });
+    const ok = await view.play(seg.moves, { timing, gate, onMove });
     if (!ok || !mine()) { if (mine()) { S.playing = false; syncMusic(0.3); } return false; }
   }
   if (!mine()) return false;
@@ -216,6 +231,29 @@ async function playStep(k) {
   return true;
 }
 
+// The turn after which the least finished work is intact (first time it is reached), if a step disturbs any.
+function lowPoint(k) {
+  const c = S.snaps[k].copy(), prot = PROTECTED[k].length;
+  let min = prot, at = -1, i = 0;
+  for (const s of S.segs) if (s.step === k) for (const m of s.moves) {
+    c.apply(m);
+    if (m[0] !== "y") i++;
+    const now = intactCount(c, k);
+    if (now < min) { min = now; at = i; }
+  }
+  return { at, min, prot };
+}
+
+// "Your turn" is offered only when the reader can see the pad (pinned under the cube); otherwise that corner
+// plays as planned and the next drop-in corner of step 2 asks again. Measured with the pad shown for one layout.
+function padInView() {
+  const pad = $("#yt");
+  pad.hidden = false;
+  const r = pad.getBoundingClientRect();
+  pad.hidden = true;
+  return r.top >= 0 && r.top + 0.75 * r.height <= innerHeight;
+}
+
 // ---- autoplay --------------------------------------------------------------------------------
 async function hold(ms, alive, scaled = true) {
   for (let left = scaled && S.fast ? ms / 2 : ms; left > 0; left -= 100) {
@@ -226,7 +264,7 @@ async function hold(ms, alive, scaled = true) {
   return alive();
 }
 const interludeOpen = () => !$("#interlude").hidden;
-const readTime = () => Math.max(3200, Math.min(11000, 2600 + 38 * ($("#i-title").textContent + $("#i-body").textContent).length));
+const readTime = () => Math.max(3200, Math.min(11000, 2000 + 38 * ($("#i-title").textContent + $("#i-body").textContent).length));
 
 async function autoRun() {
   if (S.running) return;
@@ -381,9 +419,16 @@ const certBlob = () => new Promise((res) => S.cert.canvas.toBlob(res, "image/png
 // ---- intermission: "Are you watching closely?" --------------------------------------------
 const I = { stage: 0, demo: null, scramble: [], saved: null };
 function interlude(open) {
+  // The intermission hides the tracker and buttons, so the page gets shorter under a reader who scrolled down to
+  // them, and the pinned cube would slide off screen (autoplay then waits). If the switch takes the cube below the
+  // 60% autoplay needs, put it back where it was; smaller shifts are left alone.
+  const stage = $("#stage"), seen = (r) => (Math.min(innerHeight, r.bottom) - Math.max(0, r.top)) / r.height;
+  const was = stage.getBoundingClientRect();
   $("#bench").classList.toggle("intermission", open);
   $("#interlude").hidden = !open;
   $("#steps-ui").hidden = open;
+  const now = stage.getBoundingClientRect();
+  if (seen(was) >= 0.6 && seen(now) < 0.6) window.scrollBy(0, now.top - was.top);
   $("#cube-label").textContent = open ? "The presenter’s cube" : "";
   $("#scramble-note").textContent = open ? "Your cube is safe in the drawer." : "";
   sound.setSection(open ? "breakdown" : "main");
@@ -406,11 +451,11 @@ function interlude(open) {
   }
 }
 
+// Four scenes: the claim and the demo, the reveal, the reader's own sample, the verdict.
 const SCENES = [
-  { title: "A presenter says: ‘Watch me solve this in 3 moves.’", body: "The cube on the stage was handed over already scrambled. Roll the tape.", btn: "Roll the demo" },
-  { title: "Solved in 3 moves. Applause.", body: "Before anyone signs off, one audit question.", btn: "Who scrambled it?" },
-  { title: "The presenter did.", body: "", btn: "You pick the sample" },
-  { title: "Your sample: 25 random turns.", body: "Now the presenter runs the same 3-move solve on it.", btn: "Run the 3-move solve" },
+  { title: "A presenter says: ‘Watch me solve this in 3 moves.’", body: "", btn: "Roll the demo" },
+  { title: "Solved in 3 moves. Who scrambled it?", body: "", btn: "You pick the sample" },
+  { title: "Your sample: 25 random turns.", body: "", btn: "Run the 3-move solve" },
   { title: "", body: "", btn: "Back to my cube: step 4" },
 ];
 
@@ -421,18 +466,18 @@ async function interludeNext() {
   btn.disabled = true;
   const solve3 = invert(I.scramble).split(" ");
   const clicks = { onMove: (_, m) => { if (S.clickOnLand && m[0] !== "y") sound.click(); }, gate };
-  const animates = I.stage === 0 || I.stage === 2 || I.stage === 3;
+  const animates = I.stage <= 2;
   if (animates) { S.demo = true; syncMusic(); }
   // the presenter's 3-move "solve" lands on the beat; the reader's 25-turn sample runs in sixteenths
   if (I.stage === 0) await view.play(solve3, { timing: onGrid(BEAT), ...clicks });
-  if (I.stage === 2) await view.play(randomScramble(25), { timing: onGrid(SIXTEENTH), ...clicks });
-  if (I.stage === 3) await view.play(solve3, { timing: onGrid(BEAT), ...clicks });
+  if (I.stage === 1) await view.play(randomScramble(25), { timing: onGrid(SIXTEENTH), ...clicks });
+  if (I.stage === 2) await view.play(solve3, { timing: onGrid(BEAT), ...clicks });
   if (animates) { S.demo = false; syncMusic(0.6); }
   if (I.stage === 0) sound.chime();
-  if (I.stage === 3) sound.retest();
+  if (I.stage === 2) sound.retest();
   I.busy = false;
   btn.disabled = false;
-  if (I.stage === 4) return interlude(false);
+  if (I.stage === SCENES.length - 1) return interlude(false);
   I.stage++;
   interludeRender();
 }
@@ -444,14 +489,15 @@ function interludeRender() {
   $("#i-next").textContent = sc.btn;
   const p = (html) => { const el = document.createElement("p"); el.innerHTML = html; $("#i-body").append(el); };
   if (sc.body) p(sc.body);
-  if (I.stage === 2) {
-    p(`Off camera, with 3 turns: <code>${I.scramble.join(" ")}</code>. The ‘solve’ is that scramble played backward: <code>${solve3}</code>.`);
-    p(`A cube has <b class="num">43,252,003,274,489,856,000</b> positions. <b class="num">3,502</b> of them can be solved in 3 moves or fewer. The demo only works on a sample the presenter picked.`);
+  if (I.stage === 1) {
+    p(`The presenter did, off camera, with 3 turns: <code>${I.scramble.join(" ")}</code>. The ‘solve’ is that scramble played backward: <code>${solve3}</code>.`);
   }
-  if (I.stage === 4) {
+  if (I.stage === 2) {
+    p(`Only <b class="num">3,502</b> of the cube’s <b class="num">43,252,003,274,489,856,000</b> positions can be solved in 3 moves or fewer. Now the same 3-move solve.`);
+  }
+  if (I.stage === 3) {
     $("#i-title").textContent = `Not solved. ${piecesHome(view.cube)} of 20 pieces home.`;
     p(`<b>Audit lens:</b> never test a control on a sample the preparer picked. A walkthrough the preparer stages is a three-move solve.`);
-    p(`<b>And the other trap:</b> a computer can solve any position in <b class="num">20</b> moves or fewer. The seven steps take your workbench cube <b class="num">${S.total}</b> turns (a half turn counts as one, the same way the 20 is counted). Nobody runs the 20-move version from memory every month. Optimal is for computers; repeatable is for teams.`);
   }
 }
 
@@ -507,9 +553,9 @@ $("#i-pause").addEventListener("click", () => (S.paused ? resume() : pause()));
 // not, so listening to pointerdown alone made phones need a second tap. Mouse presses count on pointerdown.
 // Events that carry no activation (a touch going down, the end of a scroll) are skipped where the browser can tell,
 // and so are taps on the ♪ button, which turns sound on or off itself.
-const unlockSound = (e) => {
+const unlockSound = (e, loud = false) => {
   if (e && ((navigator.userActivation && !navigator.userActivation.isActive) || e.target?.closest?.("#sound"))) return;
-  if (!sound.unlock(true)) return;
+  if (!sound.unlock(true, loud)) return;
   const go = () => { syncMusic(); hint(); };
   sound.ctx.state === "running" ? go() : sound.ctx.resume().then(go, () => {});
 };
@@ -526,7 +572,7 @@ if (typeof IntersectionObserver === "function") {
 $("#speed").addEventListener("click", (e) => { S.fast = !S.fast; e.currentTarget.textContent = S.fast ? "Speed 2×" : "Speed 1×"; e.currentTarget.setAttribute("aria-pressed", String(S.fast)); });
 const soundBtn = $("#sound");
 const soundLabel = () => { soundBtn.textContent = sound.on ? "♪ On" : "♪ Off"; soundBtn.setAttribute("aria-pressed", String(sound.on)); };
-soundBtn.addEventListener("click", () => { sound.setOn(!sound.on); store.set("rc-sound", sound.on ? "on" : "off"); if (sound.on) { unlockSound(); sound.tick(); } soundLabel(); hint(); });
+soundBtn.addEventListener("click", () => { sound.setOn(!sound.on); store.set("rc-sound", sound.on ? "on" : "off"); if (sound.on) { unlockSound(null, true); sound.tick(); } soundLabel(); hint(); });
 soundLabel();
 // Desktop: the tracker sits beside the cube, above the step card. Phone: under the cube.
 const wide = matchMedia("(min-width: 900px)");

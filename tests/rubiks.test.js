@@ -84,6 +84,22 @@ test("step 7 on the example cube reopens cash, subledgers, intercompany and flux
   assert.ok(c.isSolved());
 });
 
+test("step 7's low point on the example cube: 2 of 16 pieces intact, reached mid-step (where the page stops)", () => {
+  const ex = read("js/app.js").match(/const EXAMPLE = "([^"]+)"/)[1];
+  const start = new Cube().applySeq(ex), segs = solve(start), c = start.copy();
+  segs.filter((s) => s.step < 7).forEach((s) => c.applySeq(s.moves));
+  const moves = segs.filter((s) => s.step === 7).flatMap((s) => s.moves);
+  let min = PROTECTED[7].length, at = -1, i = 0;
+  for (const m of moves) {
+    c.apply(m);
+    if (m[0] !== "y") i++;
+    if (intactCount(c, 7) < min) { min = intactCount(c, 7); at = i; }
+  }
+  assert.equal(PROTECTED[7].length, 16);
+  assert.equal(min, 2, "the low point the page, the review notes and the certificate quote");
+  assert.ok(at > 0 && at < turnCount(moves), "the stop falls inside the step, before the recipe hands work back");
+});
+
 test("soundtrack: 124 BPM grid, and cube turns land on it even when frames arrive late", () => {
   assert.equal(BPM, 124);
   assert.ok(Math.abs(BAR - 4 * 60 / 124) < 1e-12 && Math.abs(EIGHTH - BAR / 8) < 1e-12 && Math.abs(SIXTEENTH - BAR / 16) < 1e-12);
@@ -117,6 +133,15 @@ test("soundtrack: the first tap on a phone unlocks it (a touch pointerdown is no
   assert.ok(events, "unlockSound is registered on a list of events");
   const list = JSON.parse(events[1]);
   for (const ev of ["pointerup", "touchend", "click", "keydown"]) assert.ok(list.includes(ev), `unlocks on ${ev}`);
+});
+
+test("soundtrack: a tap anywhere respects the iPhone silent switch; only the ♪ button asks for playback", () => {
+  const snd = read("js/sound.js"), app = read("js/app.js");
+  assert.match(snd, /if \(loud && navigator\.audioSession\) navigator\.audioSession\.type = "playback"/);
+  assert.equal((snd.match(/audioSession\.type = "playback"/g) || []).length, 1, "playback is set in one place");
+  const loudCalls = app.match(/unlockSound\([^)]*true\)/g) || [];
+  assert.deepEqual(loudCalls, ["unlockSound(null, true)"], "only one caller asks for playback");
+  assert.match(app, /soundBtn\.addEventListener\("click", [^\n]*unlockSound\(null, true\)/, "and it is the ♪ button");
 });
 
 test("close certificate: exact wording, initials cleaned, links to the live page", () => {

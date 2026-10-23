@@ -64,7 +64,10 @@ export class Sound {
 
   // Audio starts only after a gesture: the page calls unlock(true) on the first tap or key press.
   // Before that, every sound is skipped silently (autoplay keeps moving without sound).
-  unlock(fromGesture = false) {
+  // iPhone: Safari treats web audio as "ambient", so the ring/silent switch mutes it, and a tap anywhere keeps it
+  // that way (nobody gets music in a meeting by tapping Pause). Turning sound on with the ♪ button passes
+  // loud = true: "playback" makes it behave like a video (iOS 16.4 and later); elsewhere this is a no-op.
+  unlock(fromGesture = false, loud = false) {
     if (!this.on || (!this.ctx && !fromGesture)) return false;
     try {
       if (!this.ctx) {
@@ -72,9 +75,7 @@ export class Sound {
         if (!AC) return false;
         this.attach(new AC());
       }
-      // iPhone: Safari treats web audio as "ambient" by default, so the ring/silent switch mutes it.
-      // "playback" makes it behave like a video (iOS 16.4 and later); elsewhere this is a no-op.
-      if (fromGesture && navigator.audioSession) navigator.audioSession.type = "playback";
+      if (loud && navigator.audioSession) navigator.audioSession.type = "playback";
       if (this.ctx.state === "suspended") this.ctx.resume();
       return true;
     } catch { return false; }
