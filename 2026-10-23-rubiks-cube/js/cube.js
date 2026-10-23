@@ -197,7 +197,7 @@ export function solve(start) {
     } else {
       const s = firstOf(spins, (x) => !x.pieceSolved([1, -1, 1]));
       run(2, "Corner stuck at the bottom: spin it to the front right", s);
-      run(2, "One magic trick brings it up", TRICK, "trick");
+      run(2, "One magic trick brings it up", TRICK, "lift");
     }
   }
   if (!STAGE[2](c)) throw new Error("step 2");

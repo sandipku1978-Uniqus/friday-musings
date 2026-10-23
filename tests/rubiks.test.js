@@ -7,6 +7,7 @@ import {
 } from "../2026-10-23-rubiks-cube/js/cube.js";
 import { STEPS } from "../2026-10-23-rubiks-cube/js/steps.js";
 import { gridSlot, tensionCutoff, BPM, BAR, EIGHTH, SIXTEENTH, LEVEL } from "../2026-10-23-rubiks-cube/js/sound.js";
+import { certFacts, cleanInitials, PAGE_URL } from "../2026-10-23-rubiks-cube/js/cert.js";
 
 const DIR = new URL("../2026-10-23-rubiks-cube/", import.meta.url);
 const read = (p) => fs.readFileSync(new URL(p, DIR), "utf8");
@@ -109,6 +110,21 @@ test("soundtrack: tension muffles the mix as finished work leaves its place", ()
   assert.ok(LEVEL > 0 && LEVEL < 1, "output trim stays below unity");
 });
 
+test("close certificate: exact wording, initials cleaned, links to the live page", () => {
+  const ws = STEPS.map((s) => s.ws);
+  const f = certFacts({ total: 164, mode: "example", low7: 2, prot7: 16, workstreams: ws, mine: { tricks: 3, turns: 12 }, initials: "s.k9" });
+  assert.equal(f.summary, "7 of 7 workstreams signed off");
+  assert.deepEqual(f.lines, ["164 turns on the example cube", "Step 7 low point: 2 of 16 pieces intact", "Handed back: 16 of 16", "Magic trick run by hand: 3 tricks, 12 turns"]);
+  assert.equal(f.reviewer, "SK");
+  const g = certFacts({ total: 159, mode: "mine", low7: null, prot7: 16, workstreams: ws, mine: { tricks: 1, turns: 4 }, initials: "" });
+  assert.equal(g.reviewer, "you");
+  assert.deepEqual(g.lines, ["159 turns on my own scramble", "Handed back: 16 of 16", "Magic trick run by hand: 1 trick, 4 turns"]);
+  assert.ok(g.share.includes("7 of 7 workstreams signed off in 159 turns") && g.share.length < 280);
+  assert.equal(cleanInitials("  ab-cd "), "ABC");
+  const og = read("index.html").match(/property="og:url" content="([^"]+)"/)[1];
+  assert.equal(PAGE_URL, og, "certificate links to the same URL as the page's og:url");
+});
+
 test("3,502 positions can be solved in 3 moves or fewer (half-turn metric)", () => {
   const moves = [..."UDLRFB"].flatMap((f) => [f, f + "'", f + "2"]);
   let frontier = [new Cube()];
@@ -133,7 +149,7 @@ test("the staged demo: the 'solve' is the scramble played backward", () => {
 test("copy follows the house style", () => {
   const post = read("content/linkedin_post.md");
   const body = post.split(/^---$/m).slice(1).join("---").trim();
-  const files = { "index.html": read("index.html"), "js/steps.js": read("js/steps.js"), "js/app.js": read("js/app.js"), "js/sound.js": read("js/sound.js"), "linkedin_post.md": body };
+  const files = { "index.html": read("index.html"), "js/steps.js": read("js/steps.js"), "js/app.js": read("js/app.js"), "js/sound.js": read("js/sound.js"), "js/cert.js": read("js/cert.js"), "linkedin_post.md": body };
   for (const [name, text] of Object.entries(files)) {
     const visible = text.replace(/<style>[\s\S]*?<\/style>/, "");
     for (const bad of [/~/, /\babout\b/i, /\bnearly\b/i, /\bapproximately\b/i, /\btoday\b/i, /this morning/i, /\bcheap/i, /\bcolour/i, /\bfavour/i]) {

@@ -1,8 +1,9 @@
 // Page wiring: the workbench (cube, close tracker, 7 steps), autoplay or step by step, the intermission, the close checklist.
-import { Cube, solve, randomScramble, intactCount, piecesHome, PROTECTED, turnCount, invert, parse, WORDS, D_EDGES, D_CORNERS, MID_EDGES, U_EDGES } from "./cube.js";
+import { Cube, solve, randomScramble, intactCount, piecesHome, PROTECTED, turnCount, invert, parse, WORDS, TRICK, D_EDGES, D_CORNERS, MID_EDGES, U_EDGES } from "./cube.js";
 import { CubeView, VIEW_TOP, VIEW_BOTTOM } from "./view.js";
 import { STEPS, CHECKS, words } from "./steps.js";
 import { Sound, gridSlot, BEAT, EIGHTH, SIXTEENTH, BAR } from "./sound.js";
+import { certFacts, drawCert, cleanInitials, PAGE_URL } from "./cert.js";
 
 const $ = (s) => document.querySelector(s);
 const EXAMPLE = "L2 R U2 B F' B' U R F R2 L2 D' L D' R' D' R F' R F' U' L R2 L B2";
@@ -20,6 +21,7 @@ const S = {
   mode: "example", snaps: [], segs: [], done: 0, playing: false, fast: false, lens: store.get("rc-lens") || "cfo", low: null, cstep: 1, tasks: 0, total: 0,
   // autoplay (default): runs every step and the intermission on its own; pauses on request or while the cube is off screen
   auto: store.get("rc-mode") ? store.get("rc-mode") === "auto" : !reducedMotion, running: false, runId: 0, stepId: 0, paused: false, offscreen: false, waiters: [],
+  lowBy: {}, mine: null, certVer: 0,
 };
 const blocked = () => S.paused || S.offscreen;
 const gate = () => (blocked() ? new Promise((res) => S.waiters.push(res)) : Promise.resolve());
@@ -59,8 +61,10 @@ function load(scramble, mode) {
   view.setCube(snaps[1].copy());
   view.lookAt(VIEW_TOP, 400);
   S.note = mode === "example" ? "" : `Scrambled with ${parse(scramble).length} random turns.`;
+  S.lowBy = {}; S.mine = null; S.certVer++;
+  $("#cert").hidden = true;
   label();
-  $("#reviewed").classList.remove("on");
+  reviewedBox(false);
   render();
 }
 
@@ -170,29 +174,35 @@ async function playStep(k) {
   render();
   await view.lookAt(VIEW_TOP, 450);
   const segs = S.segs.filter((s) => s.step === k), n = stepTurns(k), prot = PROTECTED[k].length;
-  let done = 0;
+  let done = 0, cur = null;
+  const onMove = (_, m) => {
+    if (m[0] !== "y") { done++; if (S.clickOnLand) sound.click(); }
+    const t = done >= n ? 4 : Math.min(3, Math.floor((4 * done) / Math.max(n, 1)));
+    if (t > S.tasks) { S.tasks = t; S.justTicked = t - 1; sound.tick(); }
+    ticker(cur, m, done, n);
+    const now = intactCount(view.cube, k);
+    S.low = S.low === null ? now : Math.min(S.low, now);
+    if (prot) sound.setTension(1 - now / prot);
+    counter(view.cube, k);
+  };
   for (const seg of segs) {
+    cur = seg;
     ticker(seg, "", done, n);
-    const ok = await view.play(seg.moves, {
-      timing: onBeat,
-      gate,
-      onMove: (_, m) => {
-        if (m[0] !== "y") { done++; if (S.clickOnLand) sound.click(); }
-        const t = done >= n ? 4 : Math.min(3, Math.floor((4 * done) / Math.max(n, 1)));
-        if (t > S.tasks) { S.tasks = t; S.justTicked = t - 1; sound.tick(); }
-        ticker(seg, m, done, n);
-        const now = intactCount(view.cube, k);
-        S.low = S.low === null ? now : Math.min(S.low, now);
-        if (prot) sound.setTension(1 - now / prot);
-        counter(view.cube, k);
-      },
-    });
+    // the first corner of step 2 is the reader's: they run the magic trick themselves
+    if (k === 2 && seg.kind === "trick" && !S.ytOffered) {
+      S.ytOffered = true;
+      const how = await yourTurn(onMove, mine);
+      if (how === "abort" || !mine()) { if (mine()) { S.playing = false; syncMusic(0.3); } return false; }
+      if (how === "done") continue;
+    }
+    const ok = await view.play(seg.moves, { timing: onBeat, gate, onMove });
     if (!ok || !mine()) { if (mine()) { S.playing = false; syncMusic(0.3); } return false; }
   }
   if (!mine()) return false;
   S.playing = false;
   S.done = k;
   S.tasks = 4;
+  S.lowBy[k] = S.low;
   sound.setTension(0);
   if (!S.running && k < 7) { S.grace = Date.now() + 4000; setTimeout(() => syncMusic(), 4100); }
   syncMusic();
@@ -246,7 +256,8 @@ function resume() { S.paused = false; release(); syncMusic(); render(); }
 function finale() {
   sound.fanfare();
   sound.stopMusic(2 * BAR);
-  $("#reviewed").classList.add("on");
+  reviewedBox(true);
+  showCert();
   $("#caption").textContent = `✓ Solved in ${S.total} turns. A computer needs 20 or fewer.`;
 }
 
@@ -262,6 +273,108 @@ function jump(k) {
   ticker(null, "", 0, 0);
   render();
 }
+
+// ---- "Your turn": the reader runs the magic trick at the first corner of step 2 -----------------------
+// Taps land on the beat and the order is enforced, because it is a recipe. Repeating it until the corner drops in
+// takes exactly the tricks the solver planned, so the cube ends where the rest of the step expects it.
+// Autoplay waits 8 s for a first tap (then plays the corner itself) and 12 s between taps (then finishes the trick).
+const RECIPE = parse(TRICK), HOME = [1, -1, 1];
+function yourTurn(onMove, mine) {
+  const pad = $("#yt"), btns = [...pad.querySelectorAll("[data-m]")];
+  let next = 0, tapped = 0, played = 0, byHand = 0, idle = 0, settled = false, locked = false, won = false, chain = Promise.resolve();
+  const limit = () => (tapped ? 12000 : 8000);
+  const show = (msg) => {
+    btns.forEach((b) => { b.classList.toggle("next", !locked && b.dataset.m === RECIPE[next]); b.disabled = locked; });
+    $("#yt-count").textContent = locked ? "" : `Trick ${Math.floor(tapped / 4) + 1} · move ${next + 1} of 4`;
+    if (msg) $("#yt-msg").textContent = msg;
+  };
+  pad.hidden = false;
+  $("#yt-bar").hidden = !S.running;
+  $("#caption").textContent = "Your turn: magic trick until it drops in";
+  show(`Drop this corner in. Say it out loud: ${words(TRICK)}.`);
+  return new Promise((resolve) => {
+    const finish = (how) => {
+      if (settled) return;
+      settled = true; clearInterval(timer); pad.hidden = true; S.yt = null;
+      if (how === "done" && byHand >= 4) S.mine = { tricks: Math.floor(byHand / 4), turns: byHand };
+      resolve(how);
+    };
+    const succeed = async (mine_) => {
+      if (won) return;
+      won = true; locked = true; show(mine_ ? "Dropped in! That is the recipe: no talent needed." : "Dropped in. Same recipe, run for you.");
+      sound.chime();
+      await wait(1400);
+      finish("done");
+    };
+    const play = async (m, hand) => {
+      if (settled || !mine()) { finish("abort"); return false; }
+      const ok = await view.play([m], { timing: onBeat, gate, onMove });
+      if (!ok || !mine()) { finish("abort"); return false; }
+      played++; if (hand) byHand++;
+      if (played % 4 === 0 && view.cube.pieceSolved(HOME)) { await succeed(hand); return false; }
+      return true;
+    };
+    const finishForMe = () => {
+      if (locked) return;
+      if (!tapped) return finish("auto"); // nothing done yet: the step plays this corner as planned
+      locked = true; show("Finishing the trick for you.");
+      const rest = RECIPE.slice(next);
+      chain = chain.then(async () => {
+        for (const m of rest) if (!(await play(m, false))) return;
+        while (!settled && !view.cube.pieceSolved(HOME)) for (const m of RECIPE) if (!(await play(m, false))) return;
+        await succeed(false);
+      });
+    };
+    S.yt = {
+      tap(m, el) {
+        if (locked || settled) return;
+        idle = 0;
+        if (m !== RECIPE[next]) {
+          el.classList.remove("nope"); void el.offsetWidth; el.classList.add("nope");
+          sound.retest();
+          show(`The recipe says ${WORDS[RECIPE[next]]} next.`);
+          return;
+        }
+        next = (next + 1) % 4; tapped++;
+        show(next === 0 ? "One trick done. Corner home yet? If not, again." : "");
+        chain = chain.then(() => play(m, true));
+      },
+      skip: finishForMe,
+    };
+    const timer = setInterval(() => {
+      if (settled) return;
+      if (!mine()) return finish("abort");
+      const bar = $("#yt-timer");
+      if (!S.running || locked) { bar.style.transform = "scaleX(1)"; return; }
+      if (blocked()) return;
+      idle += 100;
+      bar.style.transform = `scaleX(${Math.max(0, 1 - idle / limit())})`;
+      if (idle >= limit()) finishForMe();
+    }, 100);
+  });
+}
+
+// ---- close certificate ---------------------------------------------------------------------------
+const initials = () => cleanInitials(store.get("rc-initials") || "");
+function reviewedBox(on) { $("#reviewed .box").textContent = on ? `✓ ${initials() || "you"}` : " "; }
+async function showCert() {
+  const ver = ++S.certVer; // a newer cube (or a newer redraw) wins
+  const facts = certFacts({
+    total: S.total, mode: S.mode, low7: S.lowBy[7] ?? null, prot7: PROTECTED[7].length,
+    workstreams: STEPS.map((s) => s.ws), mine: S.mine, initials: initials(),
+  });
+  try { await Promise.all(["800 150px Fraunces", "600 44px Inter", "600 32px 'IBM Plex Mono'"].map((f) => document.fonts.load(f))); } catch { /* fallback fonts */ }
+  if (ver !== S.certVer || S.done !== 7) return;
+  const c = document.createElement("canvas");
+  drawCert(c, facts, (cv) => CubeView.prototype.draw.call({ ctx: cv.getContext("2d"), canvas: cv, cube: view.cube.copy(), yaw: VIEW_TOP.yaw, pitch: VIEW_TOP.pitch, turning: null }));
+  S.cert = { canvas: c, facts };
+  $("#cert-img").src = c.toDataURL("image/png");
+  $("#cert-li").href = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(PAGE_URL);
+  $("#cert-share").hidden = !navigator.share;
+  $("#cert-initials").value = initials();
+  $("#cert").hidden = false;
+}
+const certBlob = () => new Promise((res) => S.cert.canvas.toBlob(res, "image/png"));
 
 // ---- intermission: "Are you watching closely?" --------------------------------------------
 const I = { stage: 0, demo: null, scramble: [], saved: null };
@@ -411,13 +524,43 @@ soundBtn.addEventListener("click", () => { sound.setOn(!sound.on); store.set("rc
 soundLabel();
 // Desktop: the tracker sits beside the cube, above the step card. Phone: under the cube.
 const wide = matchMedia("(min-width: 900px)");
-const placeTracker = () => (wide.matches ? $(".bench-side").prepend($("#tracker")) : $(".pin").after($("#tracker")));
+// The certificate sits just above the tracker in both layouts.
+const placeTracker = () => {
+  if (wide.matches) { $(".bench-side").prepend($("#tracker")); $(".bench-side").prepend($("#cert")); }
+  else { $(".pin").after($("#tracker")); $(".pin").after($("#cert")); }
+};
 wide.addEventListener ? wide.addEventListener("change", placeTracker) : wide.addListener(placeTracker);
 placeTracker();
 $("#flip").addEventListener("click", () => view.lookAt(view.pitch > 0 ? VIEW_BOTTOM : VIEW_TOP));
 document.querySelectorAll(".dot").forEach((d) => d.addEventListener("click", () => restart(() => jump(+d.dataset.step))));
 $("#intermission-dot").addEventListener("click", () => restart(() => { jump(4); S.sawInterlude = false; interlude(true); }));
 ["kid", "cfo"].forEach((l) => $("#lens-" + l).addEventListener("click", () => { S.lens = l; store.set("rc-lens", l); render(); }));
+document.querySelectorAll("#yt [data-m]").forEach((b) => b.addEventListener("click", () => S.yt && S.yt.tap(b.dataset.m, b)));
+$("#yt-skip").addEventListener("click", () => S.yt && S.yt.skip());
+$("#cert-close").addEventListener("click", () => { $("#cert").hidden = true; });
+$("#cert-dl").addEventListener("click", async () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(await certBlob());
+  a.download = "close-certificate.png";
+  document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+});
+$("#cert-share").addEventListener("click", async () => {
+  const file = new File([await certBlob()], "close-certificate.png", { type: "image/png" });
+  const data = { title: "Close certificate", text: S.cert.facts.share, url: PAGE_URL };
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ ...data, files: [file] });
+    else await navigator.share(data);
+  } catch { /* the reader closed the share sheet */ }
+});
+let redraw = 0;
+$("#cert-initials").addEventListener("input", (e) => {
+  const v = cleanInitials(e.target.value);
+  e.target.value = v;
+  store.set("rc-initials", v);
+  reviewedBox(S.done === 7);
+  clearTimeout(redraw); redraw = setTimeout(showCert, 250);
+});
 $("#i-next").addEventListener("click", interludeNext);
 $("#i-skip").addEventListener("click", () => { if (!I.busy) interlude(false); });
 

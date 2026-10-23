@@ -37,7 +37,8 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `js/cube.js` | Browser twin of `cube.py` (same axes, colors, move words) plus a solver that runs the video's 7 steps on any scramble. Recipes must equal `stages.py`. |
 | `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
 | `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
-| `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, the self-check. |
+| `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, "Your turn" (the reader taps the magic trick at the first corner of step 2), the close certificate, the self-check. |
+| `js/cert.js` | The close certificate: `certFacts` (the wording, pure and unit-tested) and `drawCert` (a 1080x1350 canvas in the working-paper style, sized for a LinkedIn feed image). `PAGE_URL` must equal the page's `og:url`. |
 | `js/sound.js` | The page soundtrack: the video's theme (`music.py` chords, arpeggio, bell tune) rearranged at 124 BPM (four-on-the-floor kick with a click transient, off-beat sawtooth bass and open hats, chord stabs, fills, a crash every 8 bars), synthesized live with Web Audio. Calibrated to -16 LUFS (`LEVEL`), peaks at -3.5 dBFS. Cube turns land on its eighth-note grid (`gridSlot`), turn clicks are scheduled on the audio clock, and a low-pass filter (`tensionCutoff`) muffles the mix while finished work is out of place. The intermission switches to a breakdown section. Starts only after a tap; sets `navigator.audioSession.type = "playback"` so the iPhone silent switch does not mute it. |
 | `poster.jpg`, `og.png` | Video poster (frame at 2 s) and the 1200x630 LinkedIn preview card. |
 
@@ -61,6 +62,14 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
   when the cube is well in view, runs every step and the intermission with reading pauses, and waits while the cube
   is fully off screen. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible while
   the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a gesture).
+- "Your turn": at the first drop-in corner of step 2 (solver segment kind `trick`; stuck-corner lifts are `lift`), a
+  pad of four buttons asks the reader to run the magic trick. Order is enforced, taps land on the beat, and repeating
+  it until the corner is home takes exactly the solver's tricks, so the step carries on from the same state.
+  Autoplay waits 8 s for a first tap (then plays the corner itself) and 12 s between taps (then finishes the trick).
+  Offered once per page load.
+- The close certificate appears when the cube is solved: an image drawn on a canvas (`js/cert.js`), with the reader's
+  initials (letters only, 3 max, kept in localStorage), Share (Web Share, with the image where the browser allows
+  files), Post on LinkedIn (share-offsite URL) and Download.
 
 ## Rules the video follows (keep these)
 
