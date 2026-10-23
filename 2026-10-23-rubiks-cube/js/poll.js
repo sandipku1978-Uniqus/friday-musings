@@ -4,6 +4,9 @@
 
 export const POLL = {
   id: "rc1",
+  // Off for the launch (owner's call, 23 Oct 2026): the page keeps the section hidden and /api/poll stays closed,
+  // even with the store connected. To bring it back: true here, and the poll line back in the LinkedIn post.
+  on: false,
   min: 20, // a question's results open once it has this many answers
   questions: [
     {

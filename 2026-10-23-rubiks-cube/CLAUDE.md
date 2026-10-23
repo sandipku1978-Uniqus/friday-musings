@@ -78,8 +78,11 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - The close certificate appears when the cube is solved: an image drawn on a canvas (`js/cert.js`), with the
   reader's initials (letters only, 3 max, kept in localStorage), Share (Web Share, with the image where the browser
   allows files), Post on LinkedIn (share-offsite URL) and Download.
-- "Peer review" (after the review notes): three questions, one tap each, results per question open at 20 answers. It
-  needs the shared store (Vercel KV / Upstash: `KV_REST_API_URL` + `KV_REST_API_TOKEN`, or the
+- "Peer review" (after the review notes): **off for the launch** (owner's call, 23 Oct 2026). `POLL.on` is `false`
+  in `js/poll.js`, so the section stays hidden and `/api/poll` answers `{enabled: false}` even with the store
+  connected; to bring it back, set it to `true` and put the poll line back in the LinkedIn post (a test keeps the
+  post from promising the poll while it is off). When on: three questions, one tap each, results per question open
+  at 20 answers. It needs the shared store (Vercel KV / Upstash: `KV_REST_API_URL` + `KV_REST_API_TOKEN`, or the
   `UPSTASH_REDIS_REST_*` pair). Without it `/api/poll` answers `{enabled: false}` and the section stays hidden. Only
   counts are stored with the answers (one Redis hash per question, `fm:poll:rc1:<question>`); the rate limit
   separately keeps a keyed hash of the network address for one hour (`fm:rl:poll:*`), never with answers, and the

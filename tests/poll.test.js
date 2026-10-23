@@ -28,6 +28,8 @@ globalThis.fetch = async (url, init) => {
 
 const { default: handler } = await import("../api/poll.js");
 const { POLL, shares, validAnswer } = await import("../2026-10-23-rubiks-cube/js/poll.js");
+const shippedOn = POLL.on;
+POLL.on = true; // the poll ships switched off; these tests exercise it switched on (same module the API reads)
 
 function call(method, body, ip = "203.0.113.7") {
   return new Promise((resolve) => {
@@ -87,4 +89,23 @@ test("poll copy follows the house style", () => {
   const text = fs.readFileSync(new URL("../2026-10-23-rubiks-cube/js/poll.js", import.meta.url), "utf8") +
     fs.readFileSync(new URL("../2026-10-23-rubiks-cube/js/peer.js", import.meta.url), "utf8");
   for (const bad of [/~/, /\babout\b/i, /\bnearly\b/i, /\btoday\b/i, /\bcheap/i, /\bcolour/i]) assert.ok(!bad.test(text), String(bad));
+});
+
+test("off for the launch: shipped switched off, and the LinkedIn post does not promise it", () => {
+  assert.equal(shippedOn, false, "owner's call: back on with POLL.on = true in js/poll.js, plus the line in the post");
+  const post = fs.readFileSync(new URL("../2026-10-23-rubiks-cube/content/linkedin_post.md", import.meta.url), "utf8");
+  if (!shippedOn) assert.ok(!/three anonymous questions|compares with the room|peer review/i.test(post), "post mentions the poll while it is off");
+});
+
+test("switched off, the poll stays closed even with the store connected: GET says disabled, a POST counts nothing", async () => {
+  const cash = () => redis.get("fm:poll:rc1:worst")?.get("cash") ?? 0;
+  POLL.on = false;
+  try {
+    assert.deepEqual((await call("GET")).body, { enabled: false });
+    const before = cash();
+    assert.deepEqual((await call("POST", { q: "worst", a: "cash" }, "192.0.2.201")).body, { enabled: false });
+    assert.equal(cash(), before);
+  } finally {
+    POLL.on = true;
+  }
 });
