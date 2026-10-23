@@ -37,10 +37,10 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `js/cube.js` | Browser twin of `cube.py` (same axes, colors, move words) plus a solver that runs the video's 7 steps on any scramble. Recipes must equal `stages.py`. |
 | `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
 | `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
-| `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, "Your turn" (the reader taps the magic trick at the first corner of step 2), the close certificate, the self-check. |
+| `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, "Your turn" (the reader taps the magic trick at the first drop-in corner of step 2 they can see), the step-7 low-point stop, the close certificate, the self-check. |
 | `js/poll.js`, `js/peer.js` | "Peer review": the three questions (`POLL`, shared with `/api/poll`, so the server only counts answers that exist), whole-number shares that add up to 100 (`shares`), and the page UI (one question at a time, the room's bars grow out of the same rows, a you-and-the-room summary). |
 | `js/cert.js` | The close certificate: `certFacts` (the wording, pure and unit-tested) and `drawCert` (a 1080x1350 canvas in the working-paper style, sized for a LinkedIn feed image). `PAGE_URL` must equal the page's `og:url`. |
-| `js/sound.js` | The page soundtrack: the video's theme (`music.py` chords, arpeggio, bell tune) rearranged at 124 BPM (four-on-the-floor kick with a click transient, off-beat sawtooth bass and open hats, chord stabs, fills, a crash every 8 bars), synthesized live with Web Audio. Calibrated to -16 LUFS (`LEVEL`), peaks at -3.5 dBFS. Cube turns land on its eighth-note grid (`gridSlot`), turn clicks are scheduled on the audio clock, and a low-pass filter (`tensionCutoff`) muffles the mix while finished work is out of place. The intermission switches to a breakdown section. Starts only after a tap; sets `navigator.audioSession.type = "playback"` so the iPhone silent switch does not mute it. |
+| `js/sound.js` | The page soundtrack: the video's theme (`music.py` chords, arpeggio, bell tune) rearranged at 124 BPM (four-on-the-floor kick with a click transient, off-beat sawtooth bass and open hats, chord stabs, fills, a crash every 8 bars), synthesized live with Web Audio. Calibrated to -16 LUFS (`LEVEL`), peaks at -3.5 dBFS. Cube turns land on its eighth-note grid (`gridSlot`), turn clicks are scheduled on the audio clock, and a low-pass filter (`tensionCutoff`) muffles the mix while finished work is out of place. The intermission switches to a breakdown section. Starts only after a tap. A tap anywhere respects the iPhone silent switch; turning sound on with the ♪ button sets `navigator.audioSession.type = "playback"` so it plays even on silent. |
 | `poster.jpg`, `og.png` | Video poster (frame at 2 s) and the 1200x630 LinkedIn preview card. |
 
 How each step's demo cube is made: `demo_cube(k)` takes `scrambled_after(k, seed=100 + k)` (the step's goal state)
@@ -56,31 +56,36 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
   (no "~", "about", "nearly", "today", "cheap", British spellings; LinkedIn post under 3,000 characters).
 - Layout is a working paper (columnar pad, W/P ref, sign-off boxes, red-pencil tickmarks), deliberately unlike
   who-picks-up. Mobile first: one column under 900 px.
-- The solver never uses back-face moves and only spins with `y`, like the video. The intermission ("Are you
-  watching closely?") sits between steps 3 and 4.
+- The solver never uses back-face moves and only spins with `y`, like the video. The intermission ("Are you watching
+  closely?") sits between steps 3 and 4: four scenes (the claim and the demo, the reveal, the reader's own sample,
+  the verdict). It hides the tracker and buttons; if that would slide the pinned cube below the 60% autoplay needs,
+  the page scrolls it back to where it was.
 - The video loads only when tapped (`preload="none"`); it is 12.6 MB.
 - Autoplay is the default (step by step is one tap away, and the default under prefers-reduced-motion): it starts
   when the cube is well in view, runs every step and the intermission with reading pauses, and waits while the cube
-  is fully off screen. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible while
-  the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a gesture); on
-  touch screens the gesture only counts when the finger lifts, so the page unlocks audio on `pointerup`, `touchend`
-  and `click` as well as `pointerdown`.
-- "Your turn": at the first drop-in corner of step 2 (solver segment kind `trick`; stuck-corner lifts are `lift`), a
-  pad of four buttons asks the reader to run the magic trick. Order is enforced, taps land on the beat, and repeating
-  it until the corner is home takes exactly the solver's tricks, so the step carries on from the same state.
-  Autoplay waits 8 s for a first tap (then plays the corner itself) and 12 s between taps (then finishes the trick).
-  Offered once per page load.
-- The close certificate appears when the cube is solved: an image drawn on a canvas (`js/cert.js`), with the reader's
-  initials (letters only, 3 max, kept in localStorage), Share (Web Share, with the image where the browser allows
-  files), Post on LinkedIn (share-offsite URL) and Download.
+  is fully off screen. Step 7 stops at its low point (one or two bars, ending on a downbeat) with "Low point: 2 of
+  16 intact. Finish the recipe." The intro is two sentences so the cube is on a phone's first screen and
+  starts turning on load. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible
+  while the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a
+  gesture); on touch screens the gesture only counts when the finger lifts, so the page unlocks audio on
+  `pointerup`, `touchend` and `click` as well as `pointerdown`.
+- "Your turn": at the first drop-in corner of step 2 that the reader can see (solver segment kind `trick`;
+  stuck-corner lifts are `lift`; if the pad would be off screen, that corner plays and the next one asks), a pad of
+  four buttons asks the reader to run the magic trick. Order is enforced, taps land on the beat, and repeating it
+  until the corner is home takes exactly the solver's tricks, so the step carries on from the same state. Autoplay
+  waits 8 s for a first tap (then plays the corner itself) and 12 s between taps (then finishes the trick). Offered
+  once per page load.
+- The close certificate appears when the cube is solved: an image drawn on a canvas (`js/cert.js`), with the
+  reader's initials (letters only, 3 max, kept in localStorage), Share (Web Share, with the image where the browser
+  allows files), Post on LinkedIn (share-offsite URL) and Download.
 - "Peer review" (after the review notes): three questions, one tap each, results per question open at 20 answers. It
   needs the shared store (Vercel KV / Upstash: `KV_REST_API_URL` + `KV_REST_API_TOKEN`, or the
   `UPSTASH_REDIS_REST_*` pair). Without it `/api/poll` answers `{enabled: false}` and the section stays hidden. Only
   counts are stored with the answers (one Redis hash per question, `fm:poll:rc1:<question>`); the rate limit
   separately keeps a keyed hash of the network address for one hour (`fm:rl:poll:*`), never with answers, and the
   page says so; answers are validated against `js/poll.js`, and each network gets `POLL_VOTES_PER_HOUR` (default
-  30). The browser remembers its own answers so a reader is asked once. `tests/poll.test.js` runs the API against an
-  in-memory stand-in for Upstash.
+  150, so a team behind one company network fits). The browser remembers its own answers so a reader is asked once.
+  `tests/poll.test.js` runs the API against an in-memory stand-in for Upstash.
 
 ## Rules the video follows (keep these)
 

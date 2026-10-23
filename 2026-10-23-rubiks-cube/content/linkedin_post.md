@@ -8,7 +8,7 @@ under LinkedIn's 3,000-character limit and links to the page. If the Vercel proj
 
 Friday Musing: Every ledger is its own scramble
 
-A Rubik’s Cube has 43,252,003,274,489,856,000 positions. A TV presenter will solve one in 3 moves.
+A Rubik’s Cube has 43,252,003,274,489,856,000 positions. On TV, a presenter solves one in 3 moves.
 
 Ask who scrambled it.
 
@@ -26,7 +26,7 @@ I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in o
 
 → Repeatable beats optimal. A computer can solve any position in 20 moves or fewer. Teams use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams.
 
-The interactive version: scramble a cube (yours will look different, like every company’s ledger), let it solve itself step by step with the soundtrack on (or take it one step at a time), and watch a close tracker sign off one workstream per step: cash, subledgers, intercompany, all the way to sign-off. When a recipe disturbs finished work, those workstreams flip to re-testing until it is handed back. At step 2 it hands you the magic trick to run yourself, a finished close signs a certificate you can share, and three anonymous questions show how your close compares with the room. Every step has a kid view and a CFO view, and there is an intermission on staged demos.
+The interactive version: scramble your own cube, run the magic trick yourself at step 2, and watch a close tracker sign off one workstream per step. A finished close signs you a certificate, and three anonymous questions show how your close compares with the room.
 
 https://friday-musings.vercel.app/2026-10-23-rubiks-cube/
 
