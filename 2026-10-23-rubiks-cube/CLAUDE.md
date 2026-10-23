@@ -35,7 +35,7 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `content/linkedin_post.md` | The post text that goes with the video and links to the page. |
 | `index.html` | The interactive musing, served by Vercel at `/2026-10-23-rubiks-cube/`. Static, no build step. |
 | `js/cube.js` | Browser twin of `cube.py` (same axes, colors, move words) plus a solver that runs the video's 7 steps on any scramble. Recipes must equal `stages.py`. |
-| `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
+| `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. A tap (a quick press that moves under 10 px) goes to `onTap` instead; a vertical swipe scrolls the page and is never a tap. |
 | `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
 | `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, "Your turn" (the reader taps the magic trick at the first drop-in corner of step 2 they can see), the step-7 low-point stop, the close certificate, the self-check. |
 | `js/poll.js`, `js/peer.js` | "Peer review": the three questions (`POLL`, shared with `/api/poll`, so the server only counts answers that exist), whole-number shares that add up to 100 (`shares`), and the page UI (one question at a time, the room's bars grow out of the same rows, a you-and-the-room summary). |
@@ -63,12 +63,13 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - The video loads only when tapped (`preload="none"`); it is 12.6 MB.
 - Autoplay is the default (step by step is one tap away, and the default under prefers-reduced-motion): it starts
   when the cube is well in view, runs every step and the intermission with reading pauses, and waits while the cube
-  is fully off screen. Step 7 stops at its low point (one or two bars, ending on a downbeat) with "Low point: 2 of
-  16 intact. Finish the recipe." The intro is two sentences so the cube is on a phone's first screen and
-  starts turning on load. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible
-  while the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a
-  gesture); on touch screens the gesture only counts when the finger lifts, so the page unlocks audio on
-  `pointerup`, `touchend` and `click` as well as `pointerdown`.
+  is fully off screen. Tapping the cube pauses it and tapping again resumes, like a video (a "Paused · tap to
+  resume" pill shows on the cube; a drag still turns it). Step 7 stops at its low point (one or two bars, ending on
+  a downbeat) with "Low point: 2 of 16 intact. Finish the recipe." The intro is two sentences so the cube is on a
+  phone's first screen and starts turning on load. On phones the cube is pinned (sticky) at the top of the workbench
+  so it stays visible while the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block
+  audio before a gesture); on touch screens the gesture only counts when the finger lifts, so the page unlocks audio
+  on `pointerup`, `touchend` and `click` as well as `pointerdown`.
 - "Your turn": at the first drop-in corner of step 2 that the reader can see (solver segment kind `trick`;
   stuck-corner lifts are `lift`; if the pad would be off screen, that corner plays and the next one asks), a pad of
   four buttons asks the reader to run the magic trick. Order is enforced, taps land on the beat, and repeating it

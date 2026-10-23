@@ -32,19 +32,27 @@ export class CubeView {
     this.draw();
   }
 
+  // Drag to turn the cube. A tap (a quick press that barely moves) goes to onTap instead, so the page can use it;
+  // a vertical swipe scrolls the page (touch-action: pan-y) and ends in pointercancel, so it is never a tap.
   bindDrag() {
     let start = null;
     const c = this.canvas;
-    c.addEventListener("pointerdown", (e) => { start = { x: e.clientX, y: e.clientY, yaw: this.yaw, pitch: this.pitch }; });
+    c.addEventListener("pointerdown", (e) => { start = { x: e.clientX, y: e.clientY, yaw: this.yaw, pitch: this.pitch, t: performance.now(), moved: 0 }; });
     c.addEventListener("pointermove", (e) => {
       if (!start) return;
+      start.moved = Math.max(start.moved, Math.hypot(e.clientX - start.x, e.clientY - start.y));
       const k = 3.2 / c.getBoundingClientRect().width;
       this.yaw = start.yaw + (e.clientX - start.x) * k;
       if (e.pointerType !== "touch") this.pitch = Math.max(-1.2, Math.min(1.2, start.pitch + (e.clientY - start.y) * k));
       this.draw();
     });
     const end = () => { start = null; };
-    c.addEventListener("pointerup", end); c.addEventListener("pointercancel", end); c.addEventListener("pointerleave", end);
+    c.addEventListener("pointerup", () => {
+      const tap = start && start.moved < 10 && performance.now() - start.t < 600;
+      end();
+      if (tap && this.onTap) this.onTap();
+    });
+    c.addEventListener("pointercancel", end); c.addEventListener("pointerleave", end);
   }
 
   setCube(cube) { this.cube = cube; this.turning = null; this.draw(); }

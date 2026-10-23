@@ -135,6 +135,41 @@ test("soundtrack: the first tap on a phone unlocks it (a touch pointerdown is no
   for (const ev of ["pointerup", "touchend", "click", "keydown"]) assert.ok(list.includes(ev), `unlocks on ${ev}`);
 });
 
+test("tapping the cube is a tap (autoplay pauses); a drag, a scroll or a long press is not", async () => {
+  const { CubeView } = await import("../2026-10-23-rubiks-cube/js/view.js");
+  const on = {};
+  const canvas = {
+    width: 0, height: 0,
+    addEventListener: (type, fn) => { on[type] = fn; },
+    getContext: () => ({ clearRect() {} }),
+    getBoundingClientRect: () => ({ width: 300, height: 300 }),
+  };
+  globalThis.window = { devicePixelRatio: 1 };
+  const clock = performance.now;
+  let t = 0;
+  performance.now = () => t;
+  try {
+    const view = new CubeView(canvas);
+    let taps = 0;
+    view.onTap = () => taps++;
+    const press = (x = 150) => on.pointerdown({ clientX: x, clientY: 150, pointerType: "touch" });
+    const move = (x, y = 150) => on.pointermove({ clientX: x, clientY: y, pointerType: "touch" });
+    press(); t += 120; on.pointerup({});
+    assert.equal(taps, 1, "a quick press is a tap");
+    press(); move(154, 153); t += 150; on.pointerup({});
+    assert.equal(taps, 2, "a few pixels of jitter is still a tap");
+    press(); move(200); t += 150; on.pointerup({});
+    assert.equal(taps, 2, "a drag turns the cube instead");
+    press(); on.pointercancel({}); on.pointerup({});
+    assert.equal(taps, 2, "a vertical swipe scrolls the page (pointercancel): not a tap");
+    press(); t += 700; on.pointerup({});
+    assert.equal(taps, 2, "a long press is not a tap");
+  } finally {
+    performance.now = clock;
+    delete globalThis.window;
+  }
+});
+
 test("soundtrack: a tap anywhere respects the iPhone silent switch; only the ♪ button asks for playback", () => {
   const snd = read("js/sound.js"), app = read("js/app.js");
   assert.match(snd, /if \(loud && navigator\.audioSession\) navigator\.audioSession\.type = "playback"/);
