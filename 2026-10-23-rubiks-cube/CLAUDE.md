@@ -37,7 +37,8 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `js/cube.js` | Browser twin of `cube.py` (same axes, colors, move words) plus a solver that runs the video's 7 steps on any scramble. Recipes must equal `stages.py`. |
 | `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
 | `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
-| `js/app.js` | Page wiring: workbench, red-pencil "finished work intact" counter, the intermission, the self-check. |
+| `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, the self-check. |
+| `js/sound.js` | The video's soundtrack (`music.py`) re-synthesized live with Web Audio: loop while the cube turns, a click per turn, a pencil tick per close task, a chime per sign-off. Starts only after a tap; the ♪ toggle is remembered per browser. |
 | `poster.jpg`, `og.png` | Video poster (frame at 2 s) and the 1200x630 LinkedIn preview card. |
 
 How each step's demo cube is made: `demo_cube(k)` takes `scrambled_after(k, seed=100 + k)` (the step's goal state)
@@ -56,6 +57,10 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - The solver never uses back-face moves and only spins with `y`, like the video. The intermission ("Are you
   watching closely?") sits between steps 3 and 4.
 - The video loads only when tapped (`preload="none"`); it is 12.6 MB.
+- Autoplay is the default (step by step is one tap away, and the default under prefers-reduced-motion): it starts
+  when the cube is well in view, runs every step and the intermission with reading pauses, and waits while the cube
+  is fully off screen. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible while
+  the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a gesture).
 
 ## Rules the video follows (keep these)
 
