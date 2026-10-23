@@ -62,7 +62,9 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - Autoplay is the default (step by step is one tap away, and the default under prefers-reduced-motion): it starts
   when the cube is well in view, runs every step and the intermission with reading pauses, and waits while the cube
   is fully off screen. On phones the cube is pinned (sticky) at the top of the workbench so it stays visible while
-  the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a gesture).
+  the tracker and buttons scroll. Sound starts on the first tap anywhere (browsers block audio before a gesture); on
+  touch screens the gesture only counts when the finger lifts, so the page unlocks audio on `pointerup`, `touchend`
+  and `click` as well as `pointerdown`.
 - "Your turn": at the first drop-in corner of step 2 (solver segment kind `trick`; stuck-corner lifts are `lift`), a
   pad of four buttons asks the reader to run the magic trick. Order is enforced, taps land on the beat, and repeating
   it until the corner is home takes exactly the solver's tricks, so the step carries on from the same state.
@@ -71,12 +73,14 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - The close certificate appears when the cube is solved: an image drawn on a canvas (`js/cert.js`), with the reader's
   initials (letters only, 3 max, kept in localStorage), Share (Web Share, with the image where the browser allows
   files), Post on LinkedIn (share-offsite URL) and Download.
-- "Peer review" (after the review notes): three questions, one tap each, results per question open at 20 answers.
-  It needs the shared store (Vercel KV / Upstash: `KV_REST_API_URL` + `KV_REST_API_TOKEN`, or the `UPSTASH_REDIS_REST_*`
-  pair). Without it `/api/poll` answers `{enabled: false}` and the section stays hidden. Only counts are stored (one
-  Redis hash per question, `fm:poll:rc1:<question>`); answers are validated against `js/poll.js`, and each network
-  gets `POLL_VOTES_PER_HOUR` (default 30). The browser remembers its own answers so a reader is asked once.
-  `tests/poll.test.js` runs the API against an in-memory stand-in for Upstash.
+- "Peer review" (after the review notes): three questions, one tap each, results per question open at 20 answers. It
+  needs the shared store (Vercel KV / Upstash: `KV_REST_API_URL` + `KV_REST_API_TOKEN`, or the
+  `UPSTASH_REDIS_REST_*` pair). Without it `/api/poll` answers `{enabled: false}` and the section stays hidden. Only
+  counts are stored with the answers (one Redis hash per question, `fm:poll:rc1:<question>`); the rate limit
+  separately keeps a keyed hash of the network address for one hour (`fm:rl:poll:*`), never with answers, and the
+  page says so; answers are validated against `js/poll.js`, and each network gets `POLL_VOTES_PER_HOUR` (default
+  30). The browser remembers its own answers so a reader is asked once. `tests/poll.test.js` runs the API against an
+  in-memory stand-in for Upstash.
 
 ## Rules the video follows (keep these)
 
@@ -124,3 +128,6 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - `scrambled_after` uses fixed seeds, so renders are reproducible. For step 1 it also rejects cubes with white
   corners facing down, so the bottom view shows a clean white plus.
 - If you add a scene with text near the cube, add its rectangle to `hands.AVOID` (unscaled px) so the hand keeps clear.
+- Testing page audio in Playwright: its `evaluate()` grants a user activation and mouse clicks count as gestures, so
+  neither shows a phone-only unlock bug. Read state through a raw CDP session (`Runtime.evaluate` with
+  `userGesture: false`), navigate with `Page.navigate`, and tap with `page.touchscreen.tap`.

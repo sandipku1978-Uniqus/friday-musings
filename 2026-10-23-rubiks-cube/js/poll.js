@@ -1,5 +1,6 @@
 // "Peer review": three questions, one tap each, then the room's answers. The page and /api/poll both read this file,
 // so the server only ever counts answers that exist here. Only counts are stored: no IPs, no cookies, no free text.
+// The rate limit (lib/limits.js) separately keeps a keyed hash of the network address for one hour, never with answers.
 
 export const POLL = {
   id: "rc1",

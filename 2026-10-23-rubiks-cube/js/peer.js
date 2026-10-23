@@ -79,17 +79,19 @@ export function initPeer(store) {
     if (P.busy || P.mine[q.id]) return;
     P.busy = true;
     $("#pr-n").textContent = "Counting…";
+    const failed = "That answer did not go through. Please try again.";
     try {
       const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q: q.id, a: aid }) });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data.counts) throw new Error(data.error || "unavailable");
+      // the server says why (the network's hourly cap, a store outage), so show its words
+      if (!r.ok || !data.counts) { $("#pr-n").textContent = data.error || failed; return; }
       P.counts[q.id] = data.counts;
       P.min = data.min || P.min;
       P.mine[q.id] = aid;
       save();
       renderQuestion(POLL.questions.indexOf(q));
     } catch {
-      $("#pr-n").textContent = "That answer did not go through. Please try again in a minute.";
+      $("#pr-n").textContent = failed;
     } finally {
       P.busy = false;
     }

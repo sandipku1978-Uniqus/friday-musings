@@ -503,13 +503,17 @@ $("#example").addEventListener("click", () => restart(() => load(EXAMPLE, "examp
 }));
 $("#i-pause").addEventListener("click", () => (S.paused ? resume() : pause()));
 // Sound needs a gesture: the first tap or key press anywhere unlocks it, and the loop joins in if the cube is moving.
-const unlockSound = () => {
+// A touch only counts as a gesture when the finger lifts (pointerup / touchend / click); a touch pointerdown does
+// not, so listening to pointerdown alone made phones need a second tap. Mouse presses count on pointerdown.
+// Events that carry no activation (a touch going down, the end of a scroll) are skipped where the browser can tell,
+// and so are taps on the ♪ button, which turns sound on or off itself.
+const unlockSound = (e) => {
+  if (e && ((navigator.userActivation && !navigator.userActivation.isActive) || e.target?.closest?.("#sound"))) return;
   if (!sound.unlock(true)) return;
   const go = () => { syncMusic(); hint(); };
   sound.ctx.state === "running" ? go() : sound.ctx.resume().then(go, () => {});
 };
-document.addEventListener("pointerdown", unlockSound, { passive: true });
-document.addEventListener("keydown", unlockSound);
+for (const ev of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) document.addEventListener(ev, unlockSound, { passive: true });
 // Autoplay starts when the cube is well in view, and waits while it is scrolled fully out of view.
 if (typeof IntersectionObserver === "function") {
   new IntersectionObserver(([e]) => {
