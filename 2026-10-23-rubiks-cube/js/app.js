@@ -4,6 +4,7 @@ import { CubeView, VIEW_TOP, VIEW_BOTTOM } from "./view.js";
 import { STEPS, CHECKS, words } from "./steps.js";
 import { Sound, gridSlot, BEAT, EIGHTH, SIXTEENTH, BAR } from "./sound.js";
 import { certFacts, drawCert, cleanInitials, PAGE_URL } from "./cert.js";
+import { initPeer } from "./peer.js";
 
 const $ = (s) => document.querySelector(s);
 const EXAMPLE = "L2 R U2 B F' B' U R F R2 L2 D' L D' R' D' R F' R F' U' L R2 L B2";
@@ -371,6 +372,7 @@ async function showCert() {
   $("#cert-img").src = c.toDataURL("image/png");
   $("#cert-li").href = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(PAGE_URL);
   $("#cert-share").hidden = !navigator.share;
+  $("#cert-peer").hidden = !peer.enabled;
   $("#cert-initials").value = initials();
   $("#cert").hidden = false;
 }
@@ -567,6 +569,7 @@ $("#i-skip").addEventListener("click", () => { if (!I.busy) interlude(false); })
 $("#kid-steps").innerHTML = STEPS.map((s, i) => `<li><b>${i + 1}. ${s.title}.</b> ${s.kid} <span class="recipe">${s.recipe}</span></li>`).join("");
 $("#trick-words").textContent = words("R U R' U'");
 checklist();
+const peer = initPeer(store);
 load(EXAMPLE, "example");
 // ?debug exposes the internals to the browser tests (beat alignment, autoplay state). Nothing else reads it.
 if (new URLSearchParams(location.search).has("debug")) window.__rc = { S, sound, view };

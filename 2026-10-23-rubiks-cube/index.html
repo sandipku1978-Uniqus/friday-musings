@@ -60,6 +60,8 @@ h1, h2, h3 { font-family: Fraunces, Georgia, serif; font-weight: 800; letter-spa
 .num, code, .mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-weight: 600; }
 code { font-size: .92em; background: var(--chip); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
 button { font: inherit; cursor: pointer; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.primary:active, .tool:active, .chip:active, .pr-opt:not(.done):active, .yt-pad button:active { transform: scale(.98); }
 :focus-visible { outline: 3px solid var(--pencil); outline-offset: 2px; }
 .wrap { max-width: 1060px; margin: 0 auto; padding: 0 16px; }
 
@@ -196,6 +198,34 @@ button { font: inherit; cursor: pointer; }
 .cert-actions a.tool { display: grid; place-items: center; text-decoration: none; }
 @media (min-width: 900px) { .bench-side .cert { margin: 0 14px 14px 14px; } }
 .intermission { border-color: var(--pencil); }
+/* Peer review: one question at a time; the room's answers grow out of the same rows */
+.pr { margin-top: 20px; max-width: 760px; padding: 16px; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: 10px; box-shadow: var(--shadow); }
+.pr-top { display: flex; justify-content: space-between; align-items: center; font-size: .78rem; color: var(--ink-soft); }
+.pr-dots { display: flex; gap: 6px; }
+.pr-dots i { width: 24px; height: 4px; border-radius: 2px; background: var(--rule-strong); }
+.pr-dots i.on { background: var(--pencil); }
+#pr-q { font-size: clamp(1.2rem, 4.6vw, 1.5rem); margin: 10px 0 14px; }
+.pr-opts { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.pr-opt { position: relative; display: block; width: 100%; min-height: 50px; padding: 12px 64px 12px 14px; overflow: hidden; text-align: left; border: 1.5px solid var(--rule-strong); border-radius: 8px; background: var(--sheet); color: var(--ink); font-weight: 600; font-size: .98rem; }
+.pr-opt:not(.done):hover, .pr-opt:not(.done):focus-visible { border-color: var(--ink); }
+.pr-opt.done { cursor: default; }
+.pr-opt .bar { position: absolute; inset: 0 auto 0 0; width: 0; background: color-mix(in srgb, var(--ledger) 15%, transparent); transition: width .8s cubic-bezier(.2, .8, .2, 1); }
+.pr-opt .lbl { position: relative; white-space: pre-wrap; }
+.pr-opt .pct { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--ledger); font-size: .95rem; }
+.pr-opt.you { border-color: var(--pencil); }
+.pr-opt.you .lbl { color: var(--ink); }
+.pr-opt.you .bar { background: color-mix(in srgb, var(--pencil) 16%, transparent); }
+.pr-opt.you .pct { color: var(--pencil); }
+.pr-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; font-size: .86rem; color: var(--ink-soft); }
+.pr-foot .primary { min-height: 44px; padding: 10px 16px; }
+.pr-foot .primary[hidden] { display: none; }
+.pr-sum { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.pr-sum .sum-q { font-weight: 600; }
+.pr-sum .sum-room { color: var(--ledger); font-size: .9rem; }
+.pr-sum .sum-you { color: var(--pencil); font-size: .9rem; font-weight: 600; }
+.cert-peer { display: block; margin-top: 10px; font-weight: 600; font-size: .9rem; color: var(--ledger); }
+.cert-peer[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .pr-opt .bar { transition: none; } }
 .intermission .counter, .intermission .dots, .intermission .controls, .intermission .mode, .intermission .ticker, .intermission #scramble, .intermission #example { display: none; }
 #interlude { margin: 16px 14px 16px 46px; padding: 16px; border: 2px solid var(--ink); border-radius: 8px; background: var(--sheet); }
 #interlude .eyebrow { margin-bottom: 6px; }
@@ -352,6 +382,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
             <div class="cert-head"><span>W/P RC-7 · Close certificate</span><button class="linkish" id="cert-close" type="button" aria-label="Hide the certificate">✕</button></div>
             <img id="cert-img" alt="Close certificate: 7 of 7 workstreams signed off" width="1080" height="1350">
             <label class="cert-init">Reviewed by <input id="cert-initials" maxlength="3" placeholder="you" autocomplete="off" spellcheck="false" aria-label="Your initials"> <span>your initials, optional</span></label>
+            <a class="cert-peer" id="cert-peer" href="#peer" hidden>How does your close compare? Three questions, one tap each ↓</a>
             <div class="cert-actions">
               <button class="primary" id="cert-share" type="button">Share my certificate</button>
               <a class="tool" id="cert-li" target="_blank" rel="noopener">Post on LinkedIn</a>
@@ -399,6 +430,20 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <li><span class="tm">✓4</span><div><b>A recipe beats talent.</b>The four-turn magic trick does the work in step 2, sits inside step 4, and comes back on the bottom in step 7. A good control is a recipe a new hire can run, not a gift you hope stays with the company.</div></li>
         <li><span class="tm">✓5</span><div><b>Repeatable beats optimal.</b>A computer can solve any position in 20 moves or fewer. People use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams, and for the auditors who have to follow them.</div></li>
       </ol>
+    </div>
+  </section>
+
+  <section class="sheet" id="peer" hidden>
+    <div class="wrap">
+      <p class="eyebrow">Peer review</p>
+      <h2>Three questions. One tap each. Then see the room.</h2>
+      <p class="kicker">Anonymous: answers are counted and nothing else is kept. Each question’s results open at 20 answers.</p>
+      <div class="pr" id="pr" aria-live="polite">
+        <div class="pr-top"><span id="pr-step" class="mono"></span><span class="pr-dots" id="pr-dots" aria-hidden="true"></span></div>
+        <h3 id="pr-q"></h3>
+        <ol class="pr-opts" id="pr-opts"></ol>
+        <div class="pr-foot"><span id="pr-n"></span><button class="primary" id="pr-next" type="button" hidden></button></div>
+      </div>
     </div>
   </section>
 

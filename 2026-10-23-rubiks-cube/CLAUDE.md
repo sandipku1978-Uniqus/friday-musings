@@ -38,6 +38,7 @@ python -c "import render; render.sanity()"   # fast check after any copy change
 | `js/view.js` | Canvas renderer (no libraries): 26 cubies, painter's order, animated layer turns, drag to turn. |
 | `js/steps.js` | Page copy per step: kid view (the video's words) and CFO view, plus the close self-check lines. |
 | `js/app.js` | Page wiring: workbench, the close tracker (one workstream per step, 4 tasks that tick as the step plays, signed-off workstreams that flip to re-testing while a recipe disturbs their pieces) with the "finished work intact" count, the intermission, "Your turn" (the reader taps the magic trick at the first corner of step 2), the close certificate, the self-check. |
+| `js/poll.js`, `js/peer.js` | "Peer review": the three questions (`POLL`, shared with `/api/poll`, so the server only counts answers that exist), whole-number shares that add up to 100 (`shares`), and the page UI (one question at a time, the room's bars grow out of the same rows, a you-and-the-room summary). |
 | `js/cert.js` | The close certificate: `certFacts` (the wording, pure and unit-tested) and `drawCert` (a 1080x1350 canvas in the working-paper style, sized for a LinkedIn feed image). `PAGE_URL` must equal the page's `og:url`. |
 | `js/sound.js` | The page soundtrack: the video's theme (`music.py` chords, arpeggio, bell tune) rearranged at 124 BPM (four-on-the-floor kick with a click transient, off-beat sawtooth bass and open hats, chord stabs, fills, a crash every 8 bars), synthesized live with Web Audio. Calibrated to -16 LUFS (`LEVEL`), peaks at -3.5 dBFS. Cube turns land on its eighth-note grid (`gridSlot`), turn clicks are scheduled on the audio clock, and a low-pass filter (`tensionCutoff`) muffles the mix while finished work is out of place. The intermission switches to a breakdown section. Starts only after a tap; sets `navigator.audioSession.type = "playback"` so the iPhone silent switch does not mute it. |
 | `poster.jpg`, `og.png` | Video poster (frame at 2 s) and the 1200x630 LinkedIn preview card. |
@@ -70,6 +71,12 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 - The close certificate appears when the cube is solved: an image drawn on a canvas (`js/cert.js`), with the reader's
   initials (letters only, 3 max, kept in localStorage), Share (Web Share, with the image where the browser allows
   files), Post on LinkedIn (share-offsite URL) and Download.
+- "Peer review" (after the review notes): three questions, one tap each, results per question open at 20 answers.
+  It needs the shared store (Vercel KV / Upstash: `KV_REST_API_URL` + `KV_REST_API_TOKEN`, or the `UPSTASH_REDIS_REST_*`
+  pair). Without it `/api/poll` answers `{enabled: false}` and the section stays hidden. Only counts are stored (one
+  Redis hash per question, `fm:poll:rc1:<question>`); answers are validated against `js/poll.js`, and each network
+  gets `POLL_VOTES_PER_HOUR` (default 30). The browser remembers its own answers so a reader is asked once.
+  `tests/poll.test.js` runs the API against an in-memory stand-in for Upstash.
 
 ## Rules the video follows (keep these)
 
