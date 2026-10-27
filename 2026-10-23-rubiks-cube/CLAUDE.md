@@ -127,7 +127,10 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
    high-pass, spectral flux): the first page version played at -21.9 LUFS and lost 8.1 dB on a phone; the 124 BPM
    rearrangement plays at -15.9 LUFS, loses 4.3 dB on a phone, and has twice the beat density (8.2 vs 4.1 onsets/s).
    A person still needs to listen on a phone.
-2. `content/linkedin_post.md` is rewritten for the interactive page (corporate hook first, the video as the gift).
+2. `content/linkedin_post.md` is rewritten for the interactive page (corporate hook first). It is a link post with
+   nothing attached (owner's call, 27 Oct 2026): the page is the one place to go, and the kid video is the gift at the
+   end of it, so readers who watch it have already arrived. LinkedIn shows organic link posts with a small thumbnail
+   beside the title, so the post's first lines carry the hook.
 3. Possible next piece: a shorter cut for adults. The staged-demo idea now lives in the page's intermission.
 4. Known limitation: building the white flower (step 1) is learned by trying; the video shows the flower already
    made and says that it takes a few tries.
