@@ -227,6 +227,10 @@ test("copy follows the house style", () => {
   }
   assert.ok(body.length < 3000, `LinkedIn post is ${body.length} characters`);
   assert.ok(body.includes("https://friday-musings.vercel.app/2026-10-23-rubiks-cube/"), "post links to the page");
+  // A link post with nothing attached (owner's call): the kid video is the gift at the end of the page, and the post says so.
+  assert.ok(!/video in this post/i.test(body), "a link post has no video in it to point at");
+  assert.match(body, /gift is at the end of the page/, "post sends readers to the end of the page for the kid video");
+  assert.match(files["index.html"], /<section class="sheet" id="gift">[\s\S]*?output\/rubiks_cube_7_steps\.mp4[\s\S]*?<\/section>\s*<\/main>/, "the kid video is the page's last section");
   // positions = 8! x 3^7 x 12! x 2^11 / 2 = 43,252,003,274,489,856,000; "more than 43 quintillion" keeps it exact
   const fact = (n) => (n <= 1n ? 1n : n * fact(n - 1n));
   const positions = (fact(8n) * 3n ** 7n * fact(12n) * 2n ** 11n) / 2n;

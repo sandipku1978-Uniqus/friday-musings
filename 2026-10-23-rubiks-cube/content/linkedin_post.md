@@ -1,8 +1,11 @@
 # LinkedIn post: Friday Musing
 
-Status: written for the interactive page (`/2026-10-23-rubiks-cube/`) and video v4. Post it with the video
-(`output/rubiks_cube_7_steps.mp4`) attached. Everything below the rule is the post; `npm test` checks it stays
-under LinkedIn's 3,000-character limit and links to the page. If the Vercel project name changes, update the link.
+Status: written for the interactive page (`/2026-10-23-rubiks-cube/`). Post it as a link post with nothing attached:
+the page is the one place to go, and the kid video (`output/rubiks_cube_7_steps.mp4`, video v4) is the gift at the
+end of it. LinkedIn shows a link post with a small thumbnail of `og.png` beside the page title; check it in LinkedIn's
+Post Inspector (linkedin.com/post-inspector) before posting. Everything below the rule is the post; `npm test` checks
+it stays under LinkedIn's 3,000-character limit, links to the page and sends readers to the end of the page for the
+video. If the Vercel project name changes, update the link.
 
 ---
 
@@ -28,7 +31,7 @@ The interactive version: scramble your own cube, run the magic trick yourself at
 
 https://friday-musings.vercel.app/2026-10-23-rubiks-cube/
 
-The gift is the video in this post: the original tutorial, seven steps, a robot hand on every turn, age 8 and up. Hand your phone to someone who is 8 and see who finishes first. My money is on the 8-year-old.
+The gift is at the end of the page: the original tutorial video, seven steps, a robot hand on every turn, age 8 and up. Hand your phone to someone who is 8 and see who finishes first. My money is on the 8-year-old.
 
 Which step of your close looks broken right before it gets better?
 
