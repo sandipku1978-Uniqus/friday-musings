@@ -8,23 +8,21 @@ under LinkedIn's 3,000-character limit and links to the page. If the Vercel proj
 
 Friday Musing: Every ledger is its own scramble
 
-A Rubik’s Cube has 43,252,003,274,489,856,000 positions. On TV, a presenter solves one in 3 moves.
+Twenty-five years into finance, a Rubik’s Cube reminded me what the last days of a close feel like.
 
-Ask who scrambled it.
+In its last step, the cube takes its own finished work apart on purpose. On my example cube, the finished pieces in place drop from 16 to 2. Then all 16 come back.
 
-Only 3,502 of those positions can be solved in 3 moves or fewer. The presenter did the scramble off camera, and the “solve” is that scramble played backward. Audit lens: a sample the preparer picked proves the demo, not the control.
+Every heist film has that scene, where the plan looks blown right before it works. Every close has that week. Ask anyone who has cleared a suspense account.
 
-I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Twenty-five years into finance, I watched it back and saw a close checklist.
+I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watching it back, I saw a close checklist.
 
 → Layers, in order. You can’t do step 5 before step 2. Cash, subledgers, intercompany, then the top-side work.
 
 → Protect what’s already solved. Every recipe lifts finished work on purpose and puts it back. That’s change management, and regression testing for controls.
 
-→ Trust the mess in the middle. In step 7 the finished white side looks broken, then fixes itself. Every controller who has cleared a suspense account knows the feeling.
-
 → A recipe beats talent. One four-turn magic trick does the work in step 2, sits inside step 4 and comes back on the bottom in step 7. A good control is a repeatable recipe, not a gift you hope stays with the company.
 
-→ Repeatable beats optimal. A computer can solve any position in 20 moves or fewer. Teams use a longer method they can repeat and explain. Optimal is for computers; repeatable is for teams.
+→ Repeatable beats optimal. The cube has more than 43 quintillion positions, and a computer can solve any of them in 20 moves or fewer. My example cube took 164 turns. A team can repeat those 164 and explain every one. Optimal is for computers; repeatable is for teams.
 
 The interactive version: scramble your own cube, run the magic trick yourself at step 2, and watch a close tracker sign off one workstream per step. A finished close signs you a certificate to share.
 

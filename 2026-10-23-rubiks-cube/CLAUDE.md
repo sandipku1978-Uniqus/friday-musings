@@ -113,7 +113,8 @@ on its own goal. Changing a step's moves changes its demo cube automatically.
 
 ## Verified facts (safe to quote)
 
-- A cube has 43,252,003,274,489,856,000 positions.
+- A cube has 43,252,003,274,489,856,000 positions (8! x 3^7 x 12! x 2^11 / 2). Page and post say "more than 43
+  quintillion", which keeps it exact and readable; a test checks both against the formula.
 - 3,502 positions can be solved in 3 moves or fewer (checked by breadth-first search with this simulator,
   half-turn metric: 1 + 18 + 243 + 3,240). TV "three-move solves" are cubes scrambled with three turns.
 - Every position can be solved in 20 moves or fewer ("God's number").

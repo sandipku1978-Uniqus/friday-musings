@@ -495,7 +495,7 @@ function interludeRender() {
     p(`The presenter did, off camera, with 3 turns: <code>${I.scramble.join(" ")}</code>. The ‘solve’ is that scramble played backward: <code>${solve3}</code>.`);
   }
   if (I.stage === 2) {
-    p(`Only <b class="num">3,502</b> of the cube’s <b class="num">43,252,003,274,489,856,000</b> positions can be solved in 3 moves or fewer. Now the same 3-move solve.`);
+    p(`A cube has more than <b class="num">43 quintillion</b> positions. Only <b class="num">3,502</b> can be solved in 3 moves or fewer. Now the same 3-move solve.`);
   }
   if (I.stage === 3) {
     $("#i-title").textContent = `Not solved. ${piecesHome(view.cube)} of 20 pieces home.`;
