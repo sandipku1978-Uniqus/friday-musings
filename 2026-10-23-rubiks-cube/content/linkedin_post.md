@@ -12,9 +12,9 @@ A Rubik’s Cube has 43,252,003,274,489,856,000 positions. On TV, a presenter so
 
 Ask who scrambled it.
 
-Only 3,502 of those positions can be solved in 3 moves or fewer. The presenter did the scramble off camera, and the “solve” is that scramble played backward. Audit lens: never test a control on a sample the preparer picked.
+Only 3,502 of those positions can be solved in 3 moves or fewer. The presenter did the scramble off camera, and the “solve” is that scramble played backward. Audit lens: a sample the preparer picked proves the demo, not the control.
 
-I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Watch it with a controller’s eyes and it reads like a close checklist.
+I built a Rubik’s Cube tutorial for 8-year-olds: one method, seven steps, in order. Twenty-five years into finance, I watched it back and saw a close checklist.
 
 → Layers, in order. You can’t do step 5 before step 2. Cash, subledgers, intercompany, then the top-side work.
 
@@ -30,7 +30,7 @@ The interactive version: scramble your own cube, run the magic trick yourself at
 
 https://friday-musings.vercel.app/2026-10-23-rubiks-cube/
 
-The gift is the video in this post: the original tutorial, seven steps, a robot hand on every turn, age 8 and up. Hand your phone to someone who is 8 and see who finishes first.
+The gift is the video in this post: the original tutorial, seven steps, a robot hand on every turn, age 8 and up. Hand your phone to someone who is 8 and see who finishes first. My money is on the 8-year-old.
 
 Which step of your close looks broken right before it gets better?
 
