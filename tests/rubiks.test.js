@@ -227,5 +227,12 @@ test("copy follows the house style", () => {
   }
   assert.ok(body.length < 3000, `LinkedIn post is ${body.length} characters`);
   assert.ok(body.includes("https://friday-musings.vercel.app/2026-10-23-rubiks-cube/"), "post links to the page");
-  assert.ok(files["index.html"].includes("43,252,003,274,489,856,000") || files["js/app.js"].includes("43,252,003,274,489,856,000"));
+  // positions = 8! x 3^7 x 12! x 2^11 / 2 = 43,252,003,274,489,856,000; "more than 43 quintillion" keeps it exact
+  const fact = (n) => (n <= 1n ? 1n : n * fact(n - 1n));
+  const positions = (fact(8n) * 3n ** 7n * fact(12n) * 2n ** 11n) / 2n;
+  assert.equal(positions, 43252003274489856000n);
+  assert.ok(positions > 43n * 10n ** 18n && positions < 44n * 10n ** 18n, "more than 43 quintillion, and less than 44");
+  for (const [name, text] of [["js/app.js", files["js/app.js"]], ["linkedin_post.md", body]]) {
+    assert.match(text.replace(/<[^>]+>/g, ""), /more than 43 quintillion/, `${name} states the positions as "more than 43 quintillion"`);
+  }
 });
